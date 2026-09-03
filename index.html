@@ -158,7 +158,8 @@
   .sidebar-footer a{color:var(--gold-dark); text-decoration:none;}
 
   /* ---------- Map area ---------- */
-  .map-wrap{flex:1 1 auto; position:relative; min-width:0;}
+  .map-wrap{flex:1 1 auto; display:flex; flex-direction:column; min-width:0; min-height:0;}
+  .map-area{position:relative; flex:1 1 auto; min-height:0;}
   #map{position:absolute; inset:0; background:#dfe3e6;}
 
   .basemap-switch{
@@ -198,6 +199,40 @@
     backdrop-filter:blur(4px);
   }
   .visible-badge .dotpulse{width:6px; height:6px; border-radius:50%; background:var(--gold);}
+
+  /* ---------- Profile panel ---------- */
+  .profile-panel{
+    flex:0 0 auto; height:230px; border-top:1px solid var(--line); background:var(--surface);
+    display:flex; flex-direction:column; transition:height .2s ease;
+  }
+  .profile-panel.collapsed{height:38px;}
+  .profile-panel.collapsed .profile-chart{display:none;}
+  .profile-panel.collapsed .profile-toggle svg{transform:rotate(180deg);}
+  .profile-header{
+    flex:0 0 auto; height:38px; display:flex; align-items:center; gap:10px; padding:0 14px 0 16px;
+    border-bottom:1px solid var(--line); cursor:pointer; user-select:none;
+  }
+  .profile-header h4{font-size:12.5px; font-weight:600; font-family:'Archivo',sans-serif;}
+  .profile-header .profile-stats{
+    margin-left:auto; display:flex; gap:16px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft);
+  }
+  .profile-header .profile-stats b{color:var(--ink); font-weight:500;}
+  .profile-toggle{
+    width:22px; height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--line-strong); background:var(--paper); flex:0 0 auto;
+  }
+  .profile-toggle svg{width:11px; height:11px; stroke:var(--ink-soft); transition:transform .2s ease;}
+  .profile-chart{flex:1 1 auto; min-height:0; position:relative;}
+  .profile-chart svg{display:block; width:100%; height:100%;}
+  .profile-chart .pf-grid{stroke:var(--line); stroke-width:1;}
+  .profile-chart .pf-axis-text{font-family:'IBM Plex Mono',monospace; fill:var(--ink-soft); font-size:9.5px;}
+  .profile-chart .pf-area{fill:url(#pfGradient);}
+  .profile-chart .pf-line{fill:none; stroke:var(--gold-dark); stroke-width:2; stroke-linejoin:round; stroke-linecap:round;}
+  .profile-chart .pf-pt{cursor:pointer;}
+  .profile-chart .pf-pt.dim{opacity:.22;}
+  .profile-chart .pf-pt-hit{fill:transparent; cursor:pointer;}
+  .profile-chart .pf-pt.selected{stroke:var(--ink); stroke-width:2;}
+  .profile-chart .pf-guide{stroke:var(--ink-soft); stroke-width:1; stroke-dasharray:2,3;}
 
   /* ---------- Lock screen ---------- */
   .lock-screen{
@@ -372,6 +407,7 @@
     </aside>
 
     <div class="map-wrap">
+     <div class="map-area">
       <div id="map"></div>
 
       <div class="basemap-switch">
@@ -401,6 +437,22 @@
       </button>
 
       <div class="visible-badge"><span class="dotpulse"></span><span id="visibleCount">0</span> pontos no enquadramento atual</div>
+     </div>
+
+     <div class="profile-panel" id="profilePanel">
+       <div class="profile-header" id="profileHeader">
+         <h4>Perfil longitudinal</h4>
+         <div class="profile-stats">
+           <span>Extensão <b>39,45 km</b></span>
+           <span>Cota mín. <b id="pfMin">&mdash;</b></span>
+           <span>Cota máx. <b id="pfMax">&mdash;</b></span>
+         </div>
+         <div class="profile-toggle" id="profileToggle" aria-label="Expandir/colapsar perfil">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+         </div>
+       </div>
+       <div class="profile-chart" id="profileChart"></div>
+     </div>
     </div>
   </div>
 </div>
@@ -755,6 +807,7 @@ function refreshAll(){
   rebuildMarkers();
   renderList();
   updateVisibleBadge();
+  if(!profilePanel.classList.contains('collapsed')) renderProfile();
 }
 
 function selectPoint(name, flyTo){
@@ -766,6 +819,7 @@ function selectPoint(name, flyTo){
   if(flyTo) map.flyTo([p.lat, p.lon], Math.max(map.getZoom(), 16), { duration:.6 });
   marker.openPopup();
   renderList();
+  if(!profilePanel.classList.contains('collapsed')) renderProfile();
   if(window.innerWidth <= 860) closeSidebar();
 }
 
@@ -835,6 +889,110 @@ document.getElementById('menuBtn').addEventListener('click', () => {
   sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
 });
 scrim.addEventListener('click', closeSidebar);
+
+// ---------------- Longitudinal profile ----------------
+function haversine(lat1, lon1, lat2, lon2){
+  const R = 6371000, toRad = d => d*Math.PI/180;
+  const dLat = toRad(lat2-lat1), dLon = toRad(lon2-lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+
+// Ordered Ponta de São Lourenço -> Funchal in the source file; reversed here so the
+// profile reads left-to-right in the same direction as the project title (Funchal -> PSL).
+// "0+000" is excluded: it carries no real levelled elevation (placeholder z=0 in the source).
+const PROFILE = POINTS.filter(p => p.n !== '0+000').slice().reverse();
+(function computeProfileDistances(){
+  let acc = 0;
+  PROFILE.forEach((p, i) => {
+    if(i > 0) acc += haversine(PROFILE[i-1].lat, PROFILE[i-1].lon, p.lat, p.lon);
+    p.dist = acc;
+  });
+})();
+
+const profilePanel = document.getElementById('profilePanel');
+const profileHeader = document.getElementById('profileHeader');
+const profileChartEl = document.getElementById('profileChart');
+
+function renderProfile(){
+  const rect = profileChartEl.getBoundingClientRect();
+  const W = Math.max(240, rect.width), H = Math.max(90, rect.height);
+  const padL = 44, padR = 14, padT = 12, padB = 22;
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+  const baseY = padT + innerH;
+
+  const maxDist = PROFILE[PROFILE.length-1].dist;
+  const maxE = Math.max(...PROFILE.map(p => p.e));
+  const yMax = Math.ceil((maxE + 15) / 50) * 50;
+  const yStep = yMax > 300 ? 100 : 50;
+
+  const x = d => padL + (maxDist ? (d/maxDist)*innerW : 0);
+  const y = e => baseY - (yMax ? (e/yMax)*innerH : 0);
+
+  let grid = '';
+  for(let v = 0; v <= yMax; v += yStep){
+    const gy = y(v).toFixed(1);
+    grid += `<line class="pf-grid" x1="${padL}" x2="${(W-padR).toFixed(1)}" y1="${gy}" y2="${gy}"/>`;
+    grid += `<text class="pf-axis-text" x="${padL-7}" y="${(y(v)+3).toFixed(1)}" text-anchor="end">${v}</text>`;
+  }
+  let xLabels = '';
+  for(let d = 0; d <= maxDist; d += 5000){
+    xLabels += `<text class="pf-axis-text" x="${x(d).toFixed(1)}" y="${(H-6).toFixed(1)}" text-anchor="middle">${(d/1000).toFixed(0)} km</text>`;
+  }
+
+  const linePath = PROFILE.map((p,i) => `${i===0?'M':'L'}${x(p.dist).toFixed(1)},${y(p.e).toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L${x(maxDist).toFixed(1)},${baseY.toFixed(1)} L${x(0).toFixed(1)},${baseY.toFixed(1)} Z`;
+
+  let guide = '';
+  const selP = PROFILE.find(p => p.n === state.selected);
+  if(selP){
+    guide = `<line class="pf-guide" x1="${x(selP.dist).toFixed(1)}" x2="${x(selP.dist).toFixed(1)}" y1="${padT}" y2="${baseY.toFixed(1)}"/>`;
+  }
+
+  let dots = '';
+  PROFILE.forEach(p => {
+    const active = matchesFilter(p);
+    const cx = x(p.dist).toFixed(1), cy = y(p.e).toFixed(1);
+    const r = p.hasImg ? 3.2 : 2.3;
+    const cls = 'pf-pt' + (state.selected===p.n ? ' selected' : '') + (active ? '' : ' dim');
+    dots += `<circle class="${cls}" cx="${cx}" cy="${cy}" r="${r}" fill="${CATS[p.cat].color}"><title>${p.n} · ${p.e.toFixed(1)} m</title></circle>`;
+    if(active) dots += `<circle class="pf-pt-hit" data-name="${p.n}" cx="${cx}" cy="${cy}" r="9"/>`;
+  });
+
+  profileChartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="pfGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D9A115" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#D9A115" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${grid}
+    <line class="pf-grid" x1="${padL}" x2="${(W-padR).toFixed(1)}" y1="${baseY.toFixed(1)}" y2="${baseY.toFixed(1)}"/>
+    ${guide}
+    <path class="pf-area" d="${areaPath}"/>
+    <path class="pf-line" d="${linePath}"/>
+    ${dots}
+    ${xLabels}
+  </svg>`;
+
+  profileChartEl.querySelectorAll('.pf-pt-hit').forEach(el => {
+    el.addEventListener('click', () => selectPoint(el.dataset.name, true));
+  });
+
+  document.getElementById('pfMin').textContent = Math.min(...PROFILE.map(p=>p.e)).toFixed(1) + ' m';
+  document.getElementById('pfMax').textContent = maxE.toFixed(1) + ' m';
+}
+
+profileHeader.addEventListener('click', () => {
+  profilePanel.classList.toggle('collapsed');
+});
+profilePanel.addEventListener('transitionend', e => {
+  if(e.propertyName === 'height' && !profilePanel.classList.contains('collapsed')) renderProfile();
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if(!profilePanel.classList.contains('collapsed')) renderProfile(); }, 150);
+});
 
 // ---------------- Init ----------------
 document.getElementById('statTotal').textContent = POINTS.length;
