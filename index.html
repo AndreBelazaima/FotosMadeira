@@ -532,7 +532,6 @@ const ROUTE =﻿[[[32.646768,-16.90941],[32.646779,-16.909332],[32.646792,-16.90
 // ---------------- Lock screen ----------------
 const LOCK_HASH = '5392e3e3ca48f4babc0fe5d15ba34e653ca5c65531abadf6f95ee384b70b4b15';
 const LOCK_FALLBACK_B64 = 'MTIzR2VvaWRlMjgyMA==';
-const LOCK_KEY = 'geoide_psl_unlocked';
 const lockScreen = document.getElementById('lockScreen');
 const lockInput = document.getElementById('lockInput');
 const lockBtn = document.getElementById('lockBtn');
@@ -555,7 +554,6 @@ async function tryUnlock(){
   if(!val) return;
   const ok = await checkPassword(val);
   if(ok){
-    try{ localStorage.setItem(LOCK_KEY, '1'); }catch(err){}
     lockScreen.classList.add('hide');
   } else {
     lockError.textContent = 'Password incorreta. Tente novamente.';
@@ -564,13 +562,7 @@ async function tryUnlock(){
   }
 }
 
-let alreadyUnlocked = false;
-try{ alreadyUnlocked = localStorage.getItem(LOCK_KEY) === '1'; }catch(err){}
-if(alreadyUnlocked){
-  lockScreen.classList.add('hide');
-} else {
-  lockInput.focus();
-}
+lockInput.focus();
 lockBtn.addEventListener('click', tryUnlock);
 lockInput.addEventListener('keydown', e => { if(e.key === 'Enter') tryUnlock(); });
 
