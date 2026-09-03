@@ -199,6 +199,31 @@
   }
   .visible-badge .dotpulse{width:6px; height:6px; border-radius:50%; background:var(--gold);}
 
+  /* ---------- Lock screen ---------- */
+  .lock-screen{
+    position:fixed; inset:0; z-index:5000; background:var(--paper);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .lock-screen.hide{display:none;}
+  .lock-card{
+    width:100%; max-width:360px; background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    box-shadow:var(--shadow); padding:32px 28px; text-align:center;
+  }
+  .lock-card .brand-mark{width:52px; height:52px; margin:0 auto 14px auto; display:block;}
+  .lock-card h2{font-size:18px; margin-bottom:4px;}
+  .lock-card p{font-size:12.5px; color:var(--ink-soft); margin:0 0 20px 0; line-height:1.5;}
+  .lock-card input{
+    width:100%; padding:11px 14px; border-radius:9px; border:1px solid var(--line-strong); background:var(--paper);
+    font-family:inherit; font-size:14px; text-align:center; letter-spacing:.05em; color:var(--ink);
+  }
+  .lock-card input:focus{outline:2px solid var(--gold); outline-offset:1px; background:var(--surface);}
+  .lock-card button{
+    width:100%; margin-top:12px; padding:11px 14px; border-radius:9px; border:none; background:var(--ink);
+    color:#fff; font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer;
+  }
+  .lock-card button:hover{background:#000;}
+  .lock-error{color:#B3261E; font-size:12px; margin-top:10px; min-height:14px;}
+
   /* ---------- Leaflet overrides ---------- */
   .pt-label{
     background:rgba(255,255,255,.92); border:1px solid var(--line-strong); border-radius:5px;
@@ -264,6 +289,22 @@
 </style>
 </head>
 <body>
+
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-card">
+    <svg class="brand-mark" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="47" fill="none" stroke="#D9A115" stroke-width="6"/>
+      <circle cx="50" cy="50" r="38" fill="#D9A115"/>
+      <path d="M22 66 L40 34 L52 54 L60 42 L78 66 Z" fill="#6E747A"/>
+    </svg>
+    <h2>Acesso reservado</h2>
+    <p>Introduza a password fornecida pela Geoide Geosystems para consultar o levantamento.</p>
+    <input type="password" id="lockInput" placeholder="Password" autocomplete="off">
+    <button id="lockBtn">Entrar</button>
+    <div class="lock-error" id="lockError"></div>
+  </div>
+</div>
+
 <div class="app">
 
   <header class="topbar">
@@ -487,6 +528,51 @@ const ROUTE =﻿[[[32.646768,-16.90941],[32.646779,-16.909332],[32.646792,-16.90
 [[32.741701,-16.736881],[32.741701,-16.73687],[32.741702,-16.736852],[32.741706,-16.736834],[32.741712,-16.736818],[32.741713,-16.736815]],
 [[32.732632,-16.773082],[32.7327,-16.77323]]]
 ;
+
+// ---------------- Lock screen ----------------
+const LOCK_HASH = '5392e3e3ca48f4babc0fe5d15ba34e653ca5c65531abadf6f95ee384b70b4b15';
+const LOCK_FALLBACK_B64 = 'MTIzR2VvaWRlMjgyMA==';
+const LOCK_KEY = 'geoide_psl_unlocked';
+const lockScreen = document.getElementById('lockScreen');
+const lockInput = document.getElementById('lockInput');
+const lockBtn = document.getElementById('lockBtn');
+const lockError = document.getElementById('lockError');
+
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword(val){
+  if(window.crypto && window.crypto.subtle){
+    try{ return (await sha256Hex(val)) === LOCK_HASH; }catch(err){}
+  }
+  try{ return btoa(val) === LOCK_FALLBACK_B64; }catch(err){ return false; }
+}
+
+async function tryUnlock(){
+  const val = lockInput.value;
+  if(!val) return;
+  const ok = await checkPassword(val);
+  if(ok){
+    try{ localStorage.setItem(LOCK_KEY, '1'); }catch(err){}
+    lockScreen.classList.add('hide');
+  } else {
+    lockError.textContent = 'Password incorreta. Tente novamente.';
+    lockInput.value = '';
+    lockInput.focus();
+  }
+}
+
+let alreadyUnlocked = false;
+try{ alreadyUnlocked = localStorage.getItem(LOCK_KEY) === '1'; }catch(err){}
+if(alreadyUnlocked){
+  lockScreen.classList.add('hide');
+} else {
+  lockInput.focus();
+}
+lockBtn.addEventListener('click', tryUnlock);
+lockInput.addEventListener('keydown', e => { if(e.key === 'Enter') tryUnlock(); });
 
 const CATS = {
   estaca: {label:'Marcas', color:'#D9A115'},
