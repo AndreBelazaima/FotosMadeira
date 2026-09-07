@@ -85,21 +85,6 @@
 </head>
 <body>
 
-<div class="lock-screen" id="lockScreen">
-  <div class="lock-card">
-    <svg class="brand-mark" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r="47" fill="none" stroke="#D9A115" stroke-width="6"/>
-      <circle cx="50" cy="50" r="38" fill="#D9A115"/>
-      <path d="M22 66 L40 34 L52 54 L60 42 L78 66 Z" fill="#6E747A"/>
-    </svg>
-    <h2>Acesso reservado</h2>
-    <p>Introduza a password fornecida pela Geoide Geosystems para consultar o levantamento.</p>
-    <input type="password" id="lockInput" placeholder="Password" autocomplete="off">
-    <button id="lockBtn">Entrar</button>
-    <div class="lock-error" id="lockError"></div>
-  </div>
-</div>
-
 <header class="topbar">
   <div class="brand">
     <svg class="brand-mark" viewBox="0 0 100 100">
@@ -121,7 +106,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 07/09/2026 17:22</div>
+  <div class="updated">Atualizado em 07/09/2026 17:31</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -144,45 +129,6 @@
     <br>Plataforma desenvolvida por Geoide Geosystems, SA.
   </footer>
 </div>
-
-<script>
-const LOCK_HASH = '5392e3e3ca48f4babc0fe5d15ba34e653ca5c65531abadf6f95ee384b70b4b15';
-const LOCK_FALLBACK_B64 = 'MTIzR2VvaWRlMjgyMA==';
-const lockScreen = document.getElementById('lockScreen');
-const lockInput = document.getElementById('lockInput');
-const lockBtn = document.getElementById('lockBtn');
-const lockError = document.getElementById('lockError');
-
-async function sha256Hex(str){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-async function checkPassword(val){
-  if(window.crypto && window.crypto.subtle){
-    try{ return (await sha256Hex(val)) === LOCK_HASH; }catch(err){}
-  }
-  try{ return btoa(val) === LOCK_FALLBACK_B64; }catch(err){ return false; }
-}
-
-async function tryUnlock(){
-  const val = lockInput.value;
-  if(!val) return;
-  const ok = await checkPassword(val);
-  if(ok){
-    lockScreen.classList.add('hide');
-  } else {
-    lockError.textContent = 'Password incorreta. Tente novamente.';
-    lockInput.value = '';
-    lockInput.focus();
-  }
-}
-
-lockInput.focus();
-lockBtn.addEventListener('click', tryUnlock);
-lockInput.addEventListener('keydown', e => { if(e.key === 'Enter') tryUnlock(); });
-
-</script>
 
 <script>
 const LINES = [{"linha": "Linha13", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 25, "comprimento": 365.471, "dh": 51.24, "duracao_h": 1.8833, "ef": 0.6, "toll": 1.3, "ef_pct": 0.4615384615384615, "resultado": "Aprovado", "rendimento": 194.05883289969734, "estacoes_h": 13.274571231349228, "tempo_medio_min": 4.51992, "leituras": 58, "invalidas": 8, "taxa_rep": 0.13793103448275862, "pontos_controlo": 2, "delta_medio": 0.28, "delta_max": 0.28, "inicio": "2026-09-07T14:47:18", "fim": "2026-09-07T16:40:48", "tol_tecnica": 0.906812963074525, "resultado_tecnico": "Aprovado"}, {"linha": "Linha12", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 7, "comprimento": 182.785, "dh": 10.764, "duracao_h": 0.6333, "ef": 0.3, "toll": 0.9, "ef_pct": 0.3333333333333333, "resultado": "Aprovado", "rendimento": 288.6230854255487, "estacoes_h": 11.053213327017211, "tempo_medio_min": 5.428285714285714, "leituras": 15, "invalidas": 1, "taxa_rep": 0.06666666666666667, "pontos_controlo": 1, "delta_medio": 0.28, "delta_max": 0.28, "inicio": "2026-09-07T14:02:22", "fim": "2026-09-07T14:40:57", "tol_tecnica": 0.6413004366129809, "resultado_tecnico": "Aprovado"}, {"linha": "Linha11", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 1, "comprimento": 13.639, "dh": 0.072, "duracao_h": 0.0, "ef": 0.0, "toll": 0.2, "ef_pct": 0.0, "resultado": "Aprovado", "rendimento": 0, "estacoes_h": 0, "tempo_medio_min": 0.0, "leituras": 2, "invalidas": 0, "taxa_rep": 0.0, "pontos_controlo": 1, "delta_medio": 0.03, "delta_max": 0.03, "inicio": "2026-09-07T13:44:41", "fim": "2026-09-07T13:45:14", "tol_tecnica": 0.17517919397006027, "resultado_tecnico": "Aprovado"}, {"linha": "Linha10", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 12, "comprimento": 187.834, "dh": 18.719, "duracao_h": 0.6833, "ef": 0.2, "toll": 0.9, "ef_pct": 0.22222222222222224, "resultado": "Aprovado", "rendimento": 274.89243377725745, "estacoes_h": 17.561832284501683, "tempo_medio_min": 3.4165000000000005, "leituras": 26, "invalidas": 2, "taxa_rep": 0.07692307692307693, "pontos_controlo": 2, "delta_medio": 0.105, "delta_max": 0.15, "inicio": "2026-09-07T11:34:33", "fim": "2026-09-07T12:18:03", "tol_tecnica": 0.6500973004097156, "resultado_tecnico": "Aprovado"}, {"linha": "Linha9", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 5, "comprimento": 87.388, "dh": 6.66, "duracao_h": 0.4667, "ef": 0.0, "toll": 0.6, "ef_pct": 0.0, "resultado": "Aprovado", "rendimento": 187.24662524105423, "estacoes_h": 10.713520462824084, "tempo_medio_min": 5.6004, "leituras": 13, "invalidas": 3, "taxa_rep": 0.23076923076923078, "pontos_controlo": 1, "delta_medio": 0.02, "delta_max": 0.02, "inicio": "2026-09-07T10:59:46", "fim": "2026-09-07T11:28:24", "tol_tecnica": 0.44342192097369293, "resultado_tecnico": "Aprovado"}, {"linha": "Linha8", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 31, "comprimento": 478.354, "dh": 51.393, "duracao_h": 2.8167, "ef": 1.2, "toll": 1.5, "ef_pct": 0.7999999999999999, "resultado": "Aprovado", "rendimento": 169.82781268860722, "estacoes_h": 11.005786913764334, "tempo_medio_min": 5.451677419354839, "leituras": 68, "invalidas": 6, "taxa_rep": 0.08823529411764706, "pontos_controlo": 5, "delta_medio": 0.248, "delta_max": 0.4, "inicio": "2026-09-07T08:04:39", "fim": "2026-09-07T10:54:27", "tol_tecnica": 1.037447107085465, "resultado_tecnico": "Reprovado"}, {"linha": "Linha7", "estado": "Concluida", "estacoes": 16, "comprimento": 223.915, "dh": 35.267, "duracao_h": 1.2167, "ef": 0.1, "toll": 1.0, "ef_pct": 0.1, "resultado": "Aprovado", "rendimento": 184.0346839812608, "estacoes_h": 13.150324648639764, "tempo_medio_min": 4.562625, "leituras": 34, "invalidas": 1, "taxa_rep": 0.029411764705882353, "pontos_controlo": 1, "delta_medio": 0.08, "delta_max": 0.08, "inicio": "2026-09-05T13:58:49", "fim": "2026-09-05T15:12:17", "tol_tecnica": 0.7097948647320577, "resultado_tecnico": "Aprovado"}, {"linha": "Linha6", "estado": "Concluida", "estacoes": 43, "comprimento": 1602.511, "dh": 60.393, "duracao_h": 3.9, "ef": 1.5, "toll": 2.7, "ef_pct": 0.5555555555555555, "resultado": "Aprovado", "rendimento": 410.9002564102564, "estacoes_h": 11.025641025641026, "tempo_medio_min": 5.441860465116279, "leituras": 86, "invalidas": 0, "taxa_rep": 0.0, "pontos_controlo": 5, "delta_medio": 0.302, "delta_max": 0.63, "inicio": "2026-09-05T08:07:37", "fim": "2026-09-05T12:02:14", "tol_tecnica": 1.8988548522728113, "resultado_tecnico": "Aprovado"}, {"linha": "Linha5", "estado": "Concluida", "estacoes": 7, "comprimento": 145.844, "dh": 9.203, "duracao_h": 0.6167, "ef": 0.3, "toll": 0.8, "ef_pct": 0.37499999999999994, "resultado": "Aprovado", "rendimento": 236.49100048646017, "estacoes_h": 11.350737797956867, "tempo_medio_min": 5.2860000000000005, "leituras": 15, "invalidas": 1, "taxa_rep": 0.06666666666666667, "pontos_controlo": 3, "delta_medio": 0.10000000000000002, "delta_max": 0.17, "inicio": "2026-09-04T18:21:03", "fim": "2026-09-04T18:58:41", "tol_tecnica": 0.5728429104038908, "resultado_tecnico": "Aprovado"}, {"linha": "Linha4", "estado": "Concluida", "estacoes": 11, "comprimento": 271.73, "dh": 11.781, "duracao_h": 0.95, "ef": 0.2, "toll": 1.1, "ef_pct": 0.18181818181818182, "resultado": "Aprovado", "rendimento": 286.0315789473685, "estacoes_h": 11.578947368421053, "tempo_medio_min": 5.181818181818182, "leituras": 25, "invalidas": 3, "taxa_rep": 0.12, "pontos_controlo": 1, "delta_medio": 0.23, "delta_max": 0.23, "inicio": "2026-09-04T17:06:38", "fim": "2026-09-04T18:09:47", "tol_tecnica": 0.7819159161955971, "resultado_tecnico": "Aprovado"}, {"linha": "Linha3", "estado": "Concluida", "estacoes": 24, "comprimento": 599.096, "dh": 31.945, "duracao_h": 1.9667, "ef": 0.4, "toll": 1.6, "ef_pct": 0.25, "resultado": "Aprovado", "rendimento": 304.61992169624244, "estacoes_h": 12.203182996898358, "tempo_medio_min": 4.9167499999999995, "leituras": 52, "invalidas": 4, "taxa_rep": 0.07692307692307693, "pontos_controlo": 2, "delta_medio": 0.21, "delta_max": 0.29, "inicio": "2026-09-04T14:53:26", "fim": "2026-09-04T16:51:48", "tol_tecnica": 1.161019379683216, "resultado_tecnico": "Aprovado"}, {"linha": "Linha2", "estado": "Concluida", "estacoes": 10, "comprimento": 437.904, "dh": 9.294, "duracao_h": 1.15, "ef": 0.7, "toll": 1.4, "ef_pct": 0.5, "resultado": "Aprovado", "rendimento": 380.7860869565218, "estacoes_h": 8.695652173913045, "tempo_medio_min": 6.9, "leituras": 22, "invalidas": 2, "taxa_rep": 0.09090909090909091, "pontos_controlo": 1, "delta_medio": 0.73, "delta_max": 0.73, "inicio": "2026-09-04T11:58:13", "fim": "2026-09-04T13:08:11", "tol_tecnica": 0.992614728885281, "resultado_tecnico": "Aprovado"}, {"linha": "Linha1", "estado": "Concluida", "estacoes": 30, "comprimento": 1329.88, "dh": 10.142, "duracao_h": 2.8833, "ef": 2.0, "toll": 2.4, "ef_pct": 0.8333333333333334, "resultado": "Aprovado", "rendimento": 461.2353900045087, "estacoes_h": 10.404744563520964, "tempo_medio_min": 5.7666, "leituras": 64, "invalidas": 4, "taxa_rep": 0.0625, "pontos_controlo": 3, "delta_medio": 0.6733333333333333, "delta_max": 1.27, "inicio": "2026-09-04T08:40:15", "fim": "2026-09-04T11:33:29", "tol_tecnica": 1.7298063475429846, "resultado_tecnico": "Reprovado"}];
