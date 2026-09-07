@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progresso do Nivelamento &ndash; Ponta de São Lourenço</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#D9A115; --gold-dark:#AD7C0C; --gray:#6E747A; --ink:#22252A; --ink-soft:#5B5F65;
+    --paper:#F6F4EF; --surface:#FFFFFF; --line:#E6E1D6; --line-strong:#D6D0C2;
+    --shadow:0 6px 24px rgba(34,37,42,.12);
+    --good:#4B7F52; --good-soft:rgba(75,127,82,.12);
+    --bad:#C1471D; --bad-soft:rgba(193,71,29,.12);
+    --live:#AD7C0C; --live-soft:rgba(173,124,12,.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Arial,sans-serif; -webkit-font-smoothing:antialiased;}
+  h1,h2,h3{font-family:'Archivo',system-ui,sans-serif; text-wrap:balance; margin:0;}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  a{color:inherit;}
+
+  /* ---- lock screen (identico ao index.html) ---- */
+  .lock-screen{position:fixed; inset:0; z-index:5000; background:var(--paper); display:flex; align-items:center; justify-content:center; padding:20px;}
+  .lock-screen.hide{display:none;}
+  .lock-card{width:100%; max-width:360px; background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:32px 28px; text-align:center;}
+  .lock-card .brand-mark{width:52px; height:52px; margin:0 auto 14px auto; display:block;}
+  .lock-card h2{font-size:18px; margin-bottom:4px;}
+  .lock-card p{font-size:12.5px; color:var(--ink-soft); margin:0 0 20px 0; line-height:1.5;}
+  .lock-card input{width:100%; padding:11px 14px; border-radius:9px; border:1px solid var(--line-strong); background:var(--paper); font-family:inherit; font-size:14px; text-align:center; letter-spacing:.05em; color:var(--ink);}
+  .lock-card input:focus{outline:2px solid var(--gold); outline-offset:1px; background:var(--surface);}
+  .lock-card button{width:100%; margin-top:12px; padding:11px 14px; border-radius:9px; border:none; background:var(--ink); color:#fff; font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer;}
+  .lock-card button:hover{background:#000;}
+  .lock-error{color:#B3261E; font-size:12px; margin-top:10px; min-height:14px;}
+
+  /* ---- topbar (igual ao index.html) ---- */
+  .topbar{display:flex; align-items:center; gap:14px; padding:0 18px; height:60px; background:var(--surface); border-bottom:1px solid var(--line);}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:34px; height:34px; flex:0 0 auto;}
+  .brand-text{display:flex; flex-direction:column; line-height:1.05;}
+  .brand-text .geo{font-family:'Archivo',sans-serif; font-weight:800; font-size:19px;}
+  .brand-text .geo span.g{color:var(--gold-dark);} .brand-text .geo span.i{color:var(--gray);}
+  .brand-text .sub{font-size:9.5px; letter-spacing:.14em; color:var(--ink-soft); font-weight:600; text-transform:uppercase; margin-top:1px;}
+  .divider-v{width:1px; align-self:stretch; margin:12px 4px; background:var(--line-strong);}
+  .proj-title{display:flex; flex-direction:column; gap:1px; min-width:0;}
+  .proj-title h1{font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .proj-title .proj-sub{font-size:11.5px; color:var(--ink-soft);}
+  .nav-link{margin-left:auto; font-size:12.5px; font-weight:600; color:var(--ink); text-decoration:none; border:1px solid var(--line-strong); border-radius:8px; padding:8px 14px; white-space:nowrap;}
+  .nav-link:hover{border-color:var(--gold);}
+
+  .page{max-width:1180px; margin:0 auto; padding:26px 20px 60px; display:flex; flex-direction:column; gap:20px;}
+  .updated{font-size:12px; color:var(--ink-soft);}
+
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;}
+  .kpi{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px; box-shadow:var(--shadow);}
+  .kpi .label{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); font-weight:600;}
+  .kpi .value{font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:600; margin-top:2px;}
+  .kpi .value.good{color:var(--good);} .kpi .value.bad{color:var(--bad);}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden;}
+  .card h3{font-size:14.5px; padding:14px 18px; border-bottom:1px solid var(--line);}
+  .charts{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .chart-card{padding:16px 18px;}
+  .chart-card svg{display:block; width:100%; height:auto;}
+  .bar-label{font-size:10.5px; fill:var(--ink-soft); font-family:'IBM Plex Sans';}
+  .bar-value{font-size:10.5px; fill:var(--ink); font-family:'IBM Plex Mono'; font-weight:600;}
+
+  .table-wrap{overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); text-align:left; padding:9px 14px; white-space:nowrap; border-bottom:1px solid var(--line); background:var(--paper);}
+  td{padding:8px 14px; border-bottom:1px solid var(--line); white-space:nowrap; font-variant-numeric:tabular-nums;}
+  td.num{font-family:'IBM Plex Mono',monospace;}
+  tr.live td:first-child{box-shadow:inset 3px 0 0 var(--live);}
+  .badge{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11px; font-weight:600;}
+  .badge.ok{background:var(--good-soft); color:var(--good);}
+  .badge.no{background:var(--bad-soft); color:var(--bad);}
+  .badge.live{background:var(--live-soft); color:var(--live); font-size:10px;}
+
+  footer{font-size:11px; color:var(--ink-soft); padding-top:6px;}
+
+  @media (max-width:760px){ .charts{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-card">
+    <svg class="brand-mark" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="47" fill="none" stroke="#D9A115" stroke-width="6"/>
+      <circle cx="50" cy="50" r="38" fill="#D9A115"/>
+      <path d="M22 66 L40 34 L52 54 L60 42 L78 66 Z" fill="#6E747A"/>
+    </svg>
+    <h2>Acesso reservado</h2>
+    <p>Introduza a password fornecida pela Geoide Geosystems para consultar o levantamento.</p>
+    <input type="password" id="lockInput" placeholder="Password" autocomplete="off">
+    <button id="lockBtn">Entrar</button>
+    <div class="lock-error" id="lockError"></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="47" fill="none" stroke="#D9A115" stroke-width="6"/>
+      <circle cx="50" cy="50" r="38" fill="#D9A115"/>
+      <path d="M22 66 L40 34 L52 54 L60 42 L78 66 Z" fill="#6E747A"/>
+    </svg>
+    <div class="brand-text">
+      <span class="geo"><span class="g">Geo</span><span class="i">ide</span></span>
+      <span class="sub">Geosystems</span>
+    </div>
+  </div>
+  <div class="divider-v"></div>
+  <div class="proj-title">
+    <h1>Progresso do Nivelamento &rarr; Ponta de São Lourenço</h1>
+    <span class="proj-sub">Leica LS15 &middot; nivelamento e contra-nivelamento, ramos A/B</span>
+  </div>
+  <a class="nav-link" href="index.html">&larr; Ver mapa e fotografias</a>
+</header>
+
+<div class="page">
+  <div class="updated">Atualizado em 07/09/2026 16:53</div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card">
+    <h3>Progresso por linha</h3>
+    <div class="charts" style="padding:16px 18px 0;">
+      <div class="chart-card"><h3 style="padding:0 0 10px; border:none;">Erro de fecho vs Tolerancia (mm)</h3><svg id="chart-ef" viewBox="0 0 540 240"></svg></div>
+      <div class="chart-card"><h3 style="padding:0 0 10px; border:none;">Rendimento por linha (m/h)</h3><svg id="chart-rend" viewBox="0 0 540 240"></svg></div>
+    </div>
+    <div class="table-wrap"><table id="table-linhas"><thead></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h3>Progresso por dia</h3>
+    <div class="table-wrap"><table id="table-dias"><thead></thead><tbody></tbody></table></div>
+  </div>
+
+  <footer>
+    EF/Tolerancia sao valores do sistema de monitorizacao Galileo2000. "Estado" e uma estimativa (ultima leitura de hoje = possivelmente em curso).
+    <br>Plataforma desenvolvida por Geoide Geosystems, SA.
+  </footer>
+</div>
+
+<script>
+const LOCK_HASH = '5392e3e3ca48f4babc0fe5d15ba34e653ca5c65531abadf6f95ee384b70b4b15';
+const LOCK_FALLBACK_B64 = 'MTIzR2VvaWRlMjgyMA==';
+const lockScreen = document.getElementById('lockScreen');
+const lockInput = document.getElementById('lockInput');
+const lockBtn = document.getElementById('lockBtn');
+const lockError = document.getElementById('lockError');
+
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword(val){
+  if(window.crypto && window.crypto.subtle){
+    try{ return (await sha256Hex(val)) === LOCK_HASH; }catch(err){}
+  }
+  try{ return btoa(val) === LOCK_FALLBACK_B64; }catch(err){ return false; }
+}
+
+async function tryUnlock(){
+  const val = lockInput.value;
+  if(!val) return;
+  const ok = await checkPassword(val);
+  if(ok){
+    lockScreen.classList.add('hide');
+  } else {
+    lockError.textContent = 'Password incorreta. Tente novamente.';
+    lockInput.value = '';
+    lockInput.focus();
+  }
+}
+
+lockInput.focus();
+lockBtn.addEventListener('click', tryUnlock);
+lockInput.addEventListener('keydown', e => { if(e.key === 'Enter') tryUnlock(); });
+
+</script>
+
+<script>
+const LINES = [{"linha": "Linha13", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 25, "comprimento": 365.471, "dh": 51.24, "duracao_h": 1.8833, "ef": 0.6, "toll": 1.3, "ef_pct": 0.4615384615384615, "resultado": "Aprovado", "rendimento": 194.05883289969734, "estacoes_h": 13.274571231349228, "tempo_medio_min": 4.51992, "leituras": 58, "invalidas": 8, "taxa_rep": 0.13793103448275862, "pontos_controlo": 2, "delta_medio": 0.28, "delta_max": 0.28, "inicio": "2026-09-07T14:47:18", "fim": "2026-09-07T16:40:48", "tol_tecnica": 0.906812963074525, "resultado_tecnico": "Aprovado"}, {"linha": "Linha12", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 7, "comprimento": 182.785, "dh": 10.764, "duracao_h": 0.6333, "ef": 0.3, "toll": 0.9, "ef_pct": 0.3333333333333333, "resultado": "Aprovado", "rendimento": 288.6230854255487, "estacoes_h": 11.053213327017211, "tempo_medio_min": 5.428285714285714, "leituras": 15, "invalidas": 1, "taxa_rep": 0.06666666666666667, "pontos_controlo": 1, "delta_medio": 0.28, "delta_max": 0.28, "inicio": "2026-09-07T14:02:22", "fim": "2026-09-07T14:40:57", "tol_tecnica": 0.6413004366129809, "resultado_tecnico": "Aprovado"}, {"linha": "Linha11", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 1, "comprimento": 13.639, "dh": 0.072, "duracao_h": 0.0, "ef": 0.0, "toll": 0.2, "ef_pct": 0.0, "resultado": "Aprovado", "rendimento": 0, "estacoes_h": 0, "tempo_medio_min": 0.0, "leituras": 2, "invalidas": 0, "taxa_rep": 0.0, "pontos_controlo": 1, "delta_medio": 0.03, "delta_max": 0.03, "inicio": "2026-09-07T13:44:41", "fim": "2026-09-07T13:45:14", "tol_tecnica": 0.17517919397006027, "resultado_tecnico": "Aprovado"}, {"linha": "Linha10", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 12, "comprimento": 187.834, "dh": 18.719, "duracao_h": 0.6833, "ef": 0.2, "toll": 0.9, "ef_pct": 0.22222222222222224, "resultado": "Aprovado", "rendimento": 274.89243377725745, "estacoes_h": 17.561832284501683, "tempo_medio_min": 3.4165000000000005, "leituras": 26, "invalidas": 2, "taxa_rep": 0.07692307692307693, "pontos_controlo": 2, "delta_medio": 0.105, "delta_max": 0.15, "inicio": "2026-09-07T11:34:33", "fim": "2026-09-07T12:18:03", "tol_tecnica": 0.6500973004097156, "resultado_tecnico": "Aprovado"}, {"linha": "Linha9", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 5, "comprimento": 87.388, "dh": 6.66, "duracao_h": 0.4667, "ef": 0.0, "toll": 0.6, "ef_pct": 0.0, "resultado": "Aprovado", "rendimento": 187.24662524105423, "estacoes_h": 10.713520462824084, "tempo_medio_min": 5.6004, "leituras": 13, "invalidas": 3, "taxa_rep": 0.23076923076923078, "pontos_controlo": 1, "delta_medio": 0.02, "delta_max": 0.02, "inicio": "2026-09-07T10:59:46", "fim": "2026-09-07T11:28:24", "tol_tecnica": 0.44342192097369293, "resultado_tecnico": "Aprovado"}, {"linha": "Linha8", "estado": "Possivelmente em curso (ultima leitura hoje)", "estacoes": 31, "comprimento": 478.354, "dh": 51.393, "duracao_h": 2.8167, "ef": 1.2, "toll": 1.5, "ef_pct": 0.7999999999999999, "resultado": "Aprovado", "rendimento": 169.82781268860722, "estacoes_h": 11.005786913764334, "tempo_medio_min": 5.451677419354839, "leituras": 68, "invalidas": 6, "taxa_rep": 0.08823529411764706, "pontos_controlo": 5, "delta_medio": 0.248, "delta_max": 0.4, "inicio": "2026-09-07T08:04:39", "fim": "2026-09-07T10:54:27", "tol_tecnica": 1.037447107085465, "resultado_tecnico": "Reprovado"}, {"linha": "Linha7", "estado": "Concluida", "estacoes": 16, "comprimento": 223.915, "dh": 35.267, "duracao_h": 1.2167, "ef": 0.1, "toll": 1.0, "ef_pct": 0.1, "resultado": "Aprovado", "rendimento": 184.0346839812608, "estacoes_h": 13.150324648639764, "tempo_medio_min": 4.562625, "leituras": 34, "invalidas": 1, "taxa_rep": 0.029411764705882353, "pontos_controlo": 1, "delta_medio": 0.08, "delta_max": 0.08, "inicio": "2026-09-05T13:58:49", "fim": "2026-09-05T15:12:17", "tol_tecnica": 0.7097948647320577, "resultado_tecnico": "Aprovado"}, {"linha": "Linha6", "estado": "Concluida", "estacoes": 43, "comprimento": 1602.511, "dh": 60.393, "duracao_h": 3.9, "ef": 1.5, "toll": 2.7, "ef_pct": 0.5555555555555555, "resultado": "Aprovado", "rendimento": 410.9002564102564, "estacoes_h": 11.025641025641026, "tempo_medio_min": 5.441860465116279, "leituras": 86, "invalidas": 0, "taxa_rep": 0.0, "pontos_controlo": 5, "delta_medio": 0.302, "delta_max": 0.63, "inicio": "2026-09-05T08:07:37", "fim": "2026-09-05T12:02:14", "tol_tecnica": 1.8988548522728113, "resultado_tecnico": "Aprovado"}, {"linha": "Linha5", "estado": "Concluida", "estacoes": 7, "comprimento": 145.844, "dh": 9.203, "duracao_h": 0.6167, "ef": 0.3, "toll": 0.8, "ef_pct": 0.37499999999999994, "resultado": "Aprovado", "rendimento": 236.49100048646017, "estacoes_h": 11.350737797956867, "tempo_medio_min": 5.2860000000000005, "leituras": 15, "invalidas": 1, "taxa_rep": 0.06666666666666667, "pontos_controlo": 3, "delta_medio": 0.10000000000000002, "delta_max": 0.17, "inicio": "2026-09-04T18:21:03", "fim": "2026-09-04T18:58:41", "tol_tecnica": 0.5728429104038908, "resultado_tecnico": "Aprovado"}, {"linha": "Linha4", "estado": "Concluida", "estacoes": 11, "comprimento": 271.73, "dh": 11.781, "duracao_h": 0.95, "ef": 0.2, "toll": 1.1, "ef_pct": 0.18181818181818182, "resultado": "Aprovado", "rendimento": 286.0315789473685, "estacoes_h": 11.578947368421053, "tempo_medio_min": 5.181818181818182, "leituras": 25, "invalidas": 3, "taxa_rep": 0.12, "pontos_controlo": 1, "delta_medio": 0.23, "delta_max": 0.23, "inicio": "2026-09-04T17:06:38", "fim": "2026-09-04T18:09:47", "tol_tecnica": 0.7819159161955971, "resultado_tecnico": "Aprovado"}, {"linha": "Linha3", "estado": "Concluida", "estacoes": 24, "comprimento": 599.096, "dh": 31.945, "duracao_h": 1.9667, "ef": 0.4, "toll": 1.6, "ef_pct": 0.25, "resultado": "Aprovado", "rendimento": 304.61992169624244, "estacoes_h": 12.203182996898358, "tempo_medio_min": 4.9167499999999995, "leituras": 52, "invalidas": 4, "taxa_rep": 0.07692307692307693, "pontos_controlo": 2, "delta_medio": 0.21, "delta_max": 0.29, "inicio": "2026-09-04T14:53:26", "fim": "2026-09-04T16:51:48", "tol_tecnica": 1.161019379683216, "resultado_tecnico": "Aprovado"}, {"linha": "Linha2", "estado": "Concluida", "estacoes": 10, "comprimento": 437.904, "dh": 9.294, "duracao_h": 1.15, "ef": 0.7, "toll": 1.4, "ef_pct": 0.5, "resultado": "Aprovado", "rendimento": 380.7860869565218, "estacoes_h": 8.695652173913045, "tempo_medio_min": 6.9, "leituras": 22, "invalidas": 2, "taxa_rep": 0.09090909090909091, "pontos_controlo": 1, "delta_medio": 0.73, "delta_max": 0.73, "inicio": "2026-09-04T11:58:13", "fim": "2026-09-04T13:08:11", "tol_tecnica": 0.992614728885281, "resultado_tecnico": "Aprovado"}, {"linha": "Linha1", "estado": "Concluida", "estacoes": 30, "comprimento": 1329.88, "dh": 10.142, "duracao_h": 2.8833, "ef": 2.0, "toll": 2.4, "ef_pct": 0.8333333333333334, "resultado": "Aprovado", "rendimento": 461.2353900045087, "estacoes_h": 10.404744563520964, "tempo_medio_min": 5.7666, "leituras": 64, "invalidas": 4, "taxa_rep": 0.0625, "pontos_controlo": 3, "delta_medio": 0.6733333333333333, "delta_max": 1.27, "inicio": "2026-09-04T08:40:15", "fim": "2026-09-04T11:33:29", "tol_tecnica": 1.7298063475429846, "resultado_tecnico": "Reprovado"}];
+const DAYS = [{"data": "2026-09-04", "n_linhas": 5, "estacoes": 82, "comprimento": 2784.454, "duracao_ativa": 7.5667, "rendimento": 367.98789432645674, "inicio": "2026-09-04T08:40:15", "fim": "2026-09-04T18:58:41", "duracao_total": 10.307222222222222, "leituras": 178, "invalidas": 14, "taxa_rep": 0.07865168539325842, "ef_medio": 0.72, "aprovadas": 5, "reprovadas": 0}, {"data": "2026-09-05", "n_linhas": 2, "estacoes": 59, "comprimento": 1826.426, "duracao_ativa": 5.1167, "rendimento": 356.9538960658237, "inicio": "2026-09-05T08:07:37", "fim": "2026-09-05T15:12:17", "duracao_total": 7.0777777777777775, "leituras": 120, "invalidas": 1, "taxa_rep": 0.008333333333333333, "ef_medio": 0.8, "aprovadas": 2, "reprovadas": 0}, {"data": "2026-09-07", "n_linhas": 6, "estacoes": 81, "comprimento": 1315.471, "duracao_ativa": 6.4833, "rendimento": 202.90145450619283, "inicio": "2026-09-07T08:04:39", "fim": "2026-09-07T16:40:48", "duracao_total": 8.6025, "leituras": 182, "invalidas": 20, "taxa_rep": 0.10989010989010989, "ef_medio": 0.3833333333333333, "aprovadas": 6, "reprovadas": 0}];
+
+function fmt(n, d=1){ return (n===null||n===undefined||isNaN(n)) ? '-' : Number(n).toLocaleString('pt-PT',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function fmtDT(iso){ if(!iso) return '-'; const d=new Date(iso); return d.toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+function fmtDate(iso){ const d=new Date(iso); return d.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function badge(text){ const ok = text==='Aprovado'; return `<span class="badge ${ok?'ok':'no'}">${text}</span>`; }
+
+(function renderKPIs(){
+  const totalKm = LINES.reduce((s,l)=>s+l.comprimento,0)/1000;
+  const totalEst = LINES.reduce((s,l)=>s+l.estacoes,0);
+  const totalDur = LINES.reduce((s,l)=>s+l.duracao_h,0);
+  const rend = totalDur? (totalKm*1000/totalDur):0;
+  const aprov = LINES.filter(l=>l.resultado==='Aprovado').length;
+  const kpis = [
+    {label:'Comprimento total', value: fmt(totalKm,2)+' km'},
+    {label:'Estacoes', value: totalEst},
+    {label:'Rendimento medio', value: fmt(rend,0)+' m/h'},
+    {label:'Linhas aprovadas', value: aprov+'/'+LINES.length, cls: aprov===LINES.length?'good':'bad'},
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(k=>`<div class="kpi"><div class="label">${k.label}</div><div class="value ${k.cls||''}">${k.value}</div></div>`).join('');
+})();
+
+function drawBarChart(svgId, items){
+  const svg = document.getElementById(svgId);
+  const W=540,H=240, padL=90, padR=50, padT=8, padB=8;
+  const rowH = Math.min(26, (H-padT-padB)/items.length);
+  const maxV = Math.max(...items.map(i=>i.value), 1) * 1.15;
+  const scale = (W-padL-padR)/maxV;
+  const svgH = items.length*rowH + padT + padB;
+  svg.setAttribute('viewBox', `0 0 ${W} ${svgH}`);
+  let out = '';
+  items.forEach((it,idx)=>{
+    const y = padT + idx*rowH;
+    const barW = Math.max(it.value*scale, 1);
+    out += `<text x="${padL-8}" y="${y+rowH/2+4}" text-anchor="end" class="bar-label">${it.label}</text>`;
+    out += `<rect x="${padL}" y="${y+4}" width="${barW}" height="${rowH-9}" rx="3" fill="${it.color}"></rect>`;
+    out += `<text x="${padL+barW+6}" y="${y+rowH/2+4}" class="bar-value">${it.text}</text>`;
+    if(it.ref!==undefined){
+      const rx = padL + it.ref*scale;
+      out += `<line x1="${rx}" y1="${y+2}" x2="${rx}" y2="${y+rowH-2}" stroke="var(--bad)" stroke-width="2" stroke-dasharray="3 2"></line>`;
+    }
+  });
+  svg.innerHTML = out;
+}
+drawBarChart('chart-ef', LINES.map(l=>({label:l.linha, value:l.ef, text:fmt(l.ef,2)+' mm', color: l.resultado==='Aprovado'?'var(--gold-dark)':'var(--bad)', ref:l.toll})));
+drawBarChart('chart-rend', LINES.map(l=>({label:l.linha, value:l.rendimento, text:fmt(l.rendimento,0)+' m/h', color:'var(--gray)'})));
+
+const lineCols = [
+  {k:'linha', h:'Linha'}, {k:'estado', h:'Estado'}, {k:'estacoes', h:'Estacoes', num:1},
+  {k:'comprimento', h:'Comp. (m)', num:1, d:1}, {k:'ef', h:'EF (mm)', num:1, d:2}, {k:'toll', h:'Toll (mm)', num:1, d:2},
+  {k:'resultado', h:'Resultado'}, {k:'rendimento', h:'Rend. (m/h)', num:1, d:0}, {k:'inicio', h:'Inicio', dt:1}, {k:'fim', h:'Fim', dt:1},
+];
+const dayCols = [
+  {k:'data', h:'Data', dateOnly:1}, {k:'n_linhas', h:'Linhas', num:1}, {k:'estacoes', h:'Estacoes', num:1},
+  {k:'comprimento', h:'Comp. (m)', num:1, d:1}, {k:'rendimento', h:'Rend. (m/h)', num:1, d:0},
+  {k:'inicio', h:'Inicio', dt:1}, {k:'fim', h:'Fim', dt:1}, {k:'aprovadas', h:'Aprovadas', num:1}, {k:'reprovadas', h:'Reprovadas', num:1},
+];
+function cellHtml(col, row){
+  const v = row[col.k];
+  if(col.k==='resultado') return badge(v);
+  if(col.k==='estado') return row.estado.startsWith('Conclu') ? row.estado : `<span class="badge live">${row.estado}</span>`;
+  if(col.dt) return fmtDT(v);
+  if(col.dateOnly) return fmtDate(v);
+  if(col.num) return fmt(v, col.d!==undefined?col.d:0);
+  return v;
+}
+function buildTable(tableId, cols, data){
+  const table = document.getElementById(tableId);
+  table.querySelector('thead').innerHTML = '<tr>'+cols.map(c=>`<th>${c.h}</th>`).join('')+'</tr>';
+  table.querySelector('tbody').innerHTML = data.map(row=>{
+    const cls = (row.estado && !row.estado.startsWith('Conclu')) ? ' class="live"' : '';
+    return '<tr'+cls+'>'+cols.map(c=>`<td class="${(c.num||c.dt)?'num':''}">${cellHtml(c,row)}</td>`).join('')+'</tr>';
+  }).join('');
+}
+buildTable('table-linhas', lineCols, LINES);
+buildTable('table-dias', dayCols, DAYS);
+</script>
+</body>
+</html>
