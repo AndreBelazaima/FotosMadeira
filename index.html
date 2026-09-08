@@ -725,7 +725,12 @@ const markerLayer = L.markerClusterGroup({
     });
   }
 }).addTo(map);
+const estacaLayer = L.layerGroup().addTo(map);
 const markersByName = {};
+// As "Marcas" (estacas numeradas, ex: 16000) ficam sempre visiveis e com nome,
+// ja que servem de referencia espacial no percurso - so as categorias mais
+// densas (Testemunha, Marco NP, Auxiliar, Derivacoes) sao agrupadas.
+function layerFor(p){ return p.cat === 'estaca' ? estacaLayer : markerLayer; }
 
 function makeIcon(p, selected){
   const c = CATS[p.cat].color;
@@ -835,7 +840,8 @@ window.addEventListener('keydown', e => {
 
 function rebuildMarkers(){
   markerLayer.clearLayers();
-  POINTS.forEach(p => { if(matchesFilter(p)) markerLayer.addLayer(markersByName[p.n]); });
+  estacaLayer.clearLayers();
+  POINTS.forEach(p => { if(matchesFilter(p)) layerFor(p).addLayer(markersByName[p.n]); });
 }
 
 function pointItemHtml(p){
@@ -891,10 +897,12 @@ function selectPoint(name, flyTo){
   const p = POINTS.find(x => x.n === name);
   if(!p) return;
   const marker = markersByName[name];
-  if(!markerLayer.hasLayer(marker)) markerLayer.addLayer(marker);
+  const layer = layerFor(p);
+  if(!layer.hasLayer(marker)) layer.addLayer(marker);
   if(flyTo){
     map.flyTo([p.lat, p.lon], Math.max(map.getZoom(), 16), { duration:.6 });
-    map.once('moveend', () => markerLayer.zoomToShowLayer(marker, () => marker.openPopup()));
+    if(layer === markerLayer) map.once('moveend', () => markerLayer.zoomToShowLayer(marker, () => marker.openPopup()));
+    else map.once('moveend', () => marker.openPopup());
   } else {
     marker.openPopup();
   }
