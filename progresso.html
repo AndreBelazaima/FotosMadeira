@@ -95,7 +95,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 08/09/2026 18:47</div>
+  <div class="updated">Atualizado em 08/09/2026 18:55</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -224,10 +224,10 @@ function drawBarChart(svgId, items){
     out += `<text x="${padL+barW+6}" y="${y+rowH/2+4}" class="bar-value">${it.text}</text>`;
     if(it.mid!==undefined){
       const midStr = String(it.mid);
-      const fitSize = (barW-4) / (midStr.length*0.62);
-      if(fitSize >= 6.5){
-        const midSize = Math.min(10, fitSize).toFixed(1);
-        out += `<text x="${padL+barW/2}" y="${y+rowH/2+4}" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="${midSize}" font-weight="600" fill="#fff" stroke="var(--ink)" stroke-width="2" paint-order="stroke" stroke-linejoin="round">${midStr}</text>`;
+      const midSize = 9;
+      const neededW = midStr.length*6.5 + 6;
+      if(barW >= neededW){
+        out += `<text x="${padL+barW/2}" y="${y+rowH/2+3.2}" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="${midSize}" font-weight="600" fill="#fff" stroke="var(--ink)" stroke-width="2" paint-order="stroke" stroke-linejoin="round">${midStr}</text>`;
       }
     }
     if(it.ref!==undefined){
