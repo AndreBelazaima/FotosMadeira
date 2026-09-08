@@ -596,7 +596,7 @@ map.fitBounds(bounds, { padding:[40,40] });
 const routeLayer = L.layerGroup();
 ROUTE.forEach(seg => {
   if(seg.length < 2) return;
-  L.polyline(seg, { color:'#D9A115', weight:3, opacity:.85, dashArray:'1,7', lineCap:'round' }).addTo(routeLayer);
+  L.polyline(seg, { color:'#E03131', weight:3, opacity:.85, dashArray:'1,7', lineCap:'round' }).addTo(routeLayer);
 });
 routeLayer.addTo(map);
 
