@@ -232,6 +232,11 @@
   .profile-chart .pf-pt.dim{opacity:.22;}
   .profile-chart .pf-pt-hit{fill:transparent; cursor:pointer;}
   .profile-chart .pf-pt.selected{stroke:var(--ink); stroke-width:2;}
+  .pf-tooltip{
+    position:absolute; display:none; pointer-events:none; z-index:20;
+    background:var(--ink); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    padding:4px 8px; border-radius:6px; white-space:nowrap; transform:translate(-50%,-125%);
+  }
   .profile-chart .pf-guide{stroke:var(--ink-soft); stroke-width:1; stroke-dasharray:2,3;}
 
 
@@ -839,6 +844,21 @@ const profilePanel = document.getElementById('profilePanel');
 const profileHeader = document.getElementById('profileHeader');
 const profileChartEl = document.getElementById('profileChart');
 
+profileChartEl.addEventListener('mousemove', e => {
+  const tooltip = document.getElementById('pfTooltip');
+  if(!tooltip) return;
+  const t = e.target;
+  if(!t.classList || !t.classList.contains('pf-pt-hit')){ tooltip.style.display = 'none'; return; }
+  tooltip.style.left = t.getAttribute('cx') + 'px';
+  tooltip.style.top = t.getAttribute('cy') + 'px';
+  tooltip.textContent = `${t.dataset.name} · ${t.dataset.e} m`;
+  tooltip.style.display = 'block';
+});
+profileChartEl.addEventListener('mouseleave', () => {
+  const tooltip = document.getElementById('pfTooltip');
+  if(tooltip) tooltip.style.display = 'none';
+});
+
 function renderProfile(){
   const rect = profileChartEl.getBoundingClientRect();
   const W = Math.max(240, rect.width), H = Math.max(90, rect.height);
@@ -880,8 +900,8 @@ function renderProfile(){
     const cx = x(p.dist).toFixed(1), cy = y(p.e).toFixed(1);
     const r = p.hasImg ? 3.2 : 2.3;
     const cls = 'pf-pt' + (state.selected===p.n ? ' selected' : '') + (active ? '' : ' dim');
-    dots += `<circle class="${cls}" cx="${cx}" cy="${cy}" r="${r}" fill="${CATS[p.cat].color}"><title>${p.n} · ${p.e.toFixed(1)} m</title></circle>`;
-    if(active) dots += `<circle class="pf-pt-hit" data-name="${p.n}" cx="${cx}" cy="${cy}" r="9"/>`;
+    dots += `<circle class="${cls}" cx="${cx}" cy="${cy}" r="${r}" fill="${CATS[p.cat].color}"></circle>`;
+    if(active) dots += `<circle class="pf-pt-hit" data-name="${p.n}" data-e="${p.e.toFixed(1)}" cx="${cx}" cy="${cy}" r="9"></circle>`;
   });
 
   profileChartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
@@ -896,7 +916,7 @@ function renderProfile(){
     <path class="pf-line" d="${linePath}"/>
     ${dots}
     ${xLabels}
-  </svg>`;
+  </svg><div class="pf-tooltip" id="pfTooltip"></div>`;
 
   profileChartEl.querySelectorAll('.pf-pt-hit').forEach(el => {
     el.addEventListener('click', () => selectPoint(el.dataset.name, true));
