@@ -95,7 +95,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 08/09/2026 18:35</div>
+  <div class="updated">Atualizado em 08/09/2026 18:42</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -130,6 +130,7 @@
     <div class="chart-card" style="padding:16px 18px;">
       <h3 style="padding:0 0 10px; border:none;">Leituras fora da zona segura (%)</h3>
       <svg id="chart-mira" viewBox="0 0 860 260" style="display:block; width:100%; height:auto;"></svg>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin:6px 0 0;">O numero a branco dentro de cada barra e o declive medio dessa linha - para veres se as mais inclinadas coincidem com mais leituras fora da zona segura.</p>
       <p id="chart-mira-note" style="font-size:11.5px; color:var(--ink-soft); margin:6px 0 0;"></p>
     </div>
     <div class="table-wrap"><table id="table-linhas"><thead></thead><tbody></tbody></table></div>
@@ -221,6 +222,9 @@ function drawBarChart(svgId, items){
     out += `<text x="${padL-8}" y="${y+rowH/2+4}" text-anchor="end" class="bar-label">${it.label}</text>`;
     out += `<rect x="${padL}" y="${y+4}" width="${barW}" height="${rowH-9}" rx="3" fill="${it.color}"></rect>`;
     out += `<text x="${padL+barW+6}" y="${y+rowH/2+4}" class="bar-value">${it.text}</text>`;
+    if(it.mid!==undefined){
+      out += `<text x="${padL+barW/2}" y="${y+rowH/2+4}" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" font-weight="600" fill="#fff" stroke="var(--ink)" stroke-width="2.5" paint-order="stroke" stroke-linejoin="round">${it.mid}</text>`;
+    }
     if(it.ref!==undefined){
       const rx = padL + it.ref*scale;
       out += `<line x1="${rx}" y1="${y+2}" x2="${rx}" y2="${y+rowH-2}" stroke="var(--bad)" stroke-width="2" stroke-dasharray="3 2"></line>`;
@@ -330,7 +334,7 @@ document.getElementById('chart-deseq-note').textContent = LINES.length>TOP_N ? `
 
 drawHistogramChart('chart-mira-hist', MIRA_HIST, MIRA_LEN/MIRA_HIST.length, MIRA_EXCL, MIRA_LEN-MIRA_EXCL, 'var(--gold-dark)', 'var(--bad)');
 const miraTop = topN(LINES, l=>l.pct_fora_mira, TOP_N);
-drawBarChart('chart-mira', miraTop.map(l=>({label:l.linha, value:l.pct_fora_mira*100, text:fmt(l.pct_fora_mira*100,1)+'%', color: l.pct_fora_mira>=0.15?'var(--bad)':'var(--gold-dark)'})));
+drawBarChart('chart-mira', miraTop.map(l=>({label:l.linha, value:l.pct_fora_mira*100, text:fmt(l.pct_fora_mira*100,1)+'%', mid:fmt(l.declive*100,1)+'%', color: l.pct_fora_mira>=0.15?'var(--bad)':'var(--gold-dark)'})));
 document.getElementById('chart-mira-note').textContent = LINES.length>TOP_N ? `A mostrar as ${TOP_N} linhas com mais leituras fora da zona segura, de ${LINES.length}. Tabela abaixo tem todas.` : '';
 
 const lineCols = [
