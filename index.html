@@ -804,14 +804,14 @@ function lightboxStep(delta){
   renderLightbox();
 }
 document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
-document.getElementById('lightboxPrev').addEventListener('click', () => lightboxStep(-1));
-document.getElementById('lightboxNext').addEventListener('click', () => lightboxStep(1));
+document.getElementById('lightboxPrev').addEventListener('click', () => lightboxStep(1));
+document.getElementById('lightboxNext').addEventListener('click', () => lightboxStep(-1));
 lightboxOverlay.addEventListener('click', e => { if(e.target === lightboxOverlay) closeLightbox(); });
 window.addEventListener('keydown', e => {
   if(!lightboxOverlay.classList.contains('open')) return;
   if(e.key === 'Escape') closeLightbox();
-  else if(e.key === 'ArrowLeft') lightboxStep(-1);
-  else if(e.key === 'ArrowRight') lightboxStep(1);
+  else if(e.key === 'ArrowLeft') lightboxStep(1);
+  else if(e.key === 'ArrowRight') lightboxStep(-1);
 });
 
 function rebuildMarkers(){
