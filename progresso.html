@@ -45,6 +45,7 @@
   .kpi{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px; box-shadow:var(--shadow);}
   .kpi .label{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); font-weight:600;}
   .kpi .value{font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:600; margin-top:2px;}
+  .kpi .value.compact{font-size:18px;}
   .kpi .value.good{color:var(--good);} .kpi .value.bad{color:var(--bad);}
 
   .card{background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden;}
@@ -94,7 +95,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 08/09/2026 14:19</div>
+  <div class="updated">Atualizado em 08/09/2026 14:25</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -184,7 +185,7 @@ function badge(text){ const ok = text==='Aprovado'; return `<span class="badge $
     {label:'Estacoes', value: totalEst},
     {label:'Rendimento medio', value: fmt(rend,0)+' m/h'},
     {label:'Linhas aprovadas', value: aprov+'/'+LINES.length, cls: aprov===LINES.length?'good':'bad'},
-    {label:'Km em falta', value: fmt(PROGRESS.remaining_km,2)+' km', cls: PROGRESS.remaining_km<=0.05?'good':'', title:`Percurso planeado: ${fmt(PROGRESS.total_km,2)} km · Percorrido (num so sentido): ${fmt(PROGRESS.done_km,2)} km`},
+    {label:'Km em falta', value: fmt(PROGRESS.remaining_km,2)+' / '+fmt(PROGRESS.total_km,2)+' km', cls: 'compact ' + (PROGRESS.remaining_km<=0.05?'good':''), title:`Percorrido (num so sentido): ${fmt(PROGRESS.done_km,2)} km`},
   ];
   document.getElementById('kpis').innerHTML = kpis.map(k=>`<div class="kpi" title="${k.title||''}"><div class="label">${k.label}</div><div class="value ${k.cls||''}">${k.value}</div></div>`).join('');
 })();
