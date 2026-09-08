@@ -222,8 +222,20 @@
     border:1px solid var(--line-strong); background:var(--paper); flex:0 0 auto;
   }
   .profile-toggle svg{width:11px; height:11px; stroke:var(--ink-soft); transition:transform .2s ease;}
-  .profile-chart{flex:1 1 auto; min-height:0; position:relative;}
+  .profile-chart{flex:1 1 auto; min-height:0; position:relative; cursor:crosshair;}
   .profile-chart svg{display:block; width:100%; height:100%;}
+  .pf-zoom-box{
+    position:absolute; top:0; height:100%; z-index:15; display:none;
+    background:rgba(217,161,21,.16); border-left:1px solid var(--gold-dark); border-right:1px solid var(--gold-dark);
+    pointer-events:none;
+  }
+  .zoom-reset-btn{
+    display:none; align-items:center; gap:4px; flex:0 0 auto;
+    font-size:10.5px; font-family:'IBM Plex Sans',sans-serif; color:var(--ink-soft);
+    background:var(--paper); border:1px solid var(--line-strong); border-radius:6px; padding:3px 9px; cursor:pointer;
+  }
+  .zoom-reset-btn:hover{border-color:var(--gold); color:var(--ink);}
+  .zoom-reset-btn.visible{display:flex;}
   .profile-chart .pf-grid{stroke:var(--line); stroke-width:1;}
   .profile-chart .pf-axis-text{font-family:'IBM Plex Mono',monospace; fill:var(--ink-soft); font-size:9.5px;}
   .profile-chart .pf-area{fill:url(#pfGradient);}
@@ -414,6 +426,7 @@
            <span>Cota mín. <b id="pfMin">&mdash;</b></span>
            <span>Cota máx. <b id="pfMax">&mdash;</b></span>
          </div>
+         <button class="zoom-reset-btn" id="pfZoomReset" type="button" title="Repor vista completa do perfil">&#8634; Repor zoom</button>
          <div class="profile-toggle" id="profileToggle" aria-label="Expandir/colapsar perfil">
            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
          </div>
@@ -843,6 +856,7 @@ const PROFILE = POINTS.filter(p => p.n !== '0+000').slice().reverse();
 const profilePanel = document.getElementById('profilePanel');
 const profileHeader = document.getElementById('profileHeader');
 const profileChartEl = document.getElementById('profileChart');
+profileChartEl.title = 'Arrasta para ampliar uma zona · duplo-clique para repor';
 
 profileChartEl.addEventListener('mousemove', e => {
   const tooltip = document.getElementById('pfTooltip');
@@ -859,19 +873,44 @@ profileChartEl.addEventListener('mouseleave', () => {
   if(tooltip) tooltip.style.display = 'none';
 });
 
+const PF_PAD = { l:44, r:14, t:12, b:22 };
+let zoomRange = null; // {min,max} em metros de distancia, ou null = vista completa
+let pfDragStart = null;
+
+function pfFullExtent(){ return [0, PROFILE[PROFILE.length-1].dist]; }
+function pfCurrentDomain(){ return zoomRange ? [zoomRange.min, zoomRange.max] : pfFullExtent(); }
+
+function pfNiceStep(span){
+  if(span <= 0) return 1000;
+  const raw = span / 6;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  if(norm < 1.5) return 1*mag;
+  if(norm < 3.5) return 2*mag;
+  if(norm < 7.5) return 5*mag;
+  return 10*mag;
+}
+
+function pfZoomBox(){
+  let box = profileChartEl.querySelector('.pf-zoom-box');
+  if(!box){ box = document.createElement('div'); box.className = 'pf-zoom-box'; profileChartEl.appendChild(box); }
+  return box;
+}
+
 function renderProfile(){
   const rect = profileChartEl.getBoundingClientRect();
   const W = Math.max(240, rect.width), H = Math.max(90, rect.height);
-  const padL = 44, padR = 14, padT = 12, padB = 22;
+  const { l:padL, r:padR, t:padT, b:padB } = PF_PAD;
   const innerW = W - padL - padR, innerH = H - padT - padB;
   const baseY = padT + innerH;
 
-  const maxDist = PROFILE[PROFILE.length-1].dist;
+  const [minDist, maxDist] = pfCurrentDomain();
+  const span = maxDist - minDist;
   const maxE = Math.max(...PROFILE.map(p => p.e));
   const yMax = Math.ceil((maxE + 15) / 50) * 50;
   const yStep = yMax > 300 ? 100 : 50;
 
-  const x = d => padL + (maxDist ? (d/maxDist)*innerW : 0);
+  const x = d => padL + (span ? ((d-minDist)/span)*innerW : 0);
   const y = e => baseY - (yMax ? (e/yMax)*innerH : 0);
 
   let grid = '';
@@ -881,12 +920,15 @@ function renderProfile(){
     grid += `<text class="pf-axis-text" x="${padL-7}" y="${(y(v)+3).toFixed(1)}" text-anchor="end">${v}</text>`;
   }
   let xLabels = '';
-  for(let d = 0; d <= maxDist; d += 5000){
-    xLabels += `<text class="pf-axis-text" x="${x(d).toFixed(1)}" y="${(H-6).toFixed(1)}" text-anchor="middle">${(d/1000).toFixed(0)} km</text>`;
+  const step = pfNiceStep(span);
+  const dec = step < 1000 ? 1 : 0;
+  const firstTick = Math.ceil(minDist/step)*step;
+  for(let d = firstTick; d <= maxDist; d += step){
+    xLabels += `<text class="pf-axis-text" x="${x(d).toFixed(1)}" y="${(H-6).toFixed(1)}" text-anchor="middle">${(d/1000).toFixed(dec)} km</text>`;
   }
 
   const linePath = PROFILE.map((p,i) => `${i===0?'M':'L'}${x(p.dist).toFixed(1)},${y(p.e).toFixed(1)}`).join(' ');
-  const areaPath = `${linePath} L${x(maxDist).toFixed(1)},${baseY.toFixed(1)} L${x(0).toFixed(1)},${baseY.toFixed(1)} Z`;
+  const areaPath = `${linePath} L${x(maxDist).toFixed(1)},${baseY.toFixed(1)} L${x(minDist).toFixed(1)},${baseY.toFixed(1)} Z`;
 
   let guide = '';
   const selP = PROFILE.find(p => p.n === state.selected);
@@ -896,6 +938,7 @@ function renderProfile(){
 
   let dots = '';
   PROFILE.forEach(p => {
+    if(p.dist < minDist || p.dist > maxDist) return;
     const active = matchesFilter(p);
     const cx = x(p.dist).toFixed(1), cy = y(p.e).toFixed(1);
     const r = p.hasImg ? 3.2 : 2.3;
@@ -924,7 +967,53 @@ function renderProfile(){
 
   document.getElementById('pfMin').textContent = Math.min(...PROFILE.map(p=>p.e)).toFixed(1) + ' m';
   document.getElementById('pfMax').textContent = maxE.toFixed(1) + ' m';
+  document.getElementById('pfZoomReset').classList.toggle('visible', !!zoomRange);
 }
+
+// ---------------- Zoom (arrastar para selecionar um intervalo) ----------------
+profileChartEl.addEventListener('mousedown', e => {
+  if(e.target.classList && e.target.classList.contains('pf-pt-hit')) return;
+  const rect = profileChartEl.getBoundingClientRect();
+  const px = e.clientX - rect.left;
+  if(px < PF_PAD.l || px > rect.width - PF_PAD.r) return;
+  pfDragStart = { px, rectWidth: rect.width, domain: pfCurrentDomain() };
+  const box = pfZoomBox();
+  box.style.left = px + 'px'; box.style.width = '0px'; box.style.display = 'block';
+  e.preventDefault();
+});
+window.addEventListener('mousemove', e => {
+  if(!pfDragStart) return;
+  const rect = profileChartEl.getBoundingClientRect();
+  const px = Math.min(Math.max(e.clientX - rect.left, PF_PAD.l), rect.width - PF_PAD.r);
+  const box = pfZoomBox();
+  const left = Math.min(pfDragStart.px, px), width = Math.abs(px - pfDragStart.px);
+  box.style.left = left + 'px'; box.style.width = width + 'px';
+});
+window.addEventListener('mouseup', e => {
+  if(!pfDragStart) return;
+  const rect = profileChartEl.getBoundingClientRect();
+  const px = Math.min(Math.max(e.clientX - rect.left, PF_PAD.l), rect.width - PF_PAD.r);
+  const box = profileChartEl.querySelector('.pf-zoom-box');
+  if(box) box.style.display = 'none';
+  const [a, b] = [pfDragStart.px, px].sort((m, n) => m - n);
+  if(b - a > 8){
+    const innerW = pfDragStart.rectWidth - PF_PAD.l - PF_PAD.r;
+    const [d0, d1] = pfDragStart.domain;
+    const distA = d0 + ((a - PF_PAD.l) / innerW) * (d1 - d0);
+    const distB = d0 + ((b - PF_PAD.l) / innerW) * (d1 - d0);
+    zoomRange = { min: distA, max: distB };
+    renderProfile();
+  }
+  pfDragStart = null;
+});
+profileChartEl.addEventListener('dblclick', () => {
+  if(zoomRange){ zoomRange = null; renderProfile(); }
+});
+document.getElementById('pfZoomReset').addEventListener('click', e => {
+  e.stopPropagation();
+  zoomRange = null;
+  renderProfile();
+});
 
 profileHeader.addEventListener('click', () => {
   profilePanel.classList.toggle('collapsed');
