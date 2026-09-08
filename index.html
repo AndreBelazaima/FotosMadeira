@@ -285,6 +285,48 @@
   }
   .geoide-popup .popup-link:hover{border-color:var(--gold);}
 
+  /* ---------- Photo lightbox ---------- */
+  .lightbox-overlay{
+    position:fixed; inset:0; z-index:1000; display:none;
+    background:rgba(20,20,20,.82); align-items:center; justify-content:center; padding:24px;
+  }
+  .lightbox-overlay.open{display:flex;}
+  .lightbox-modal{
+    background:var(--surface); border-radius:14px; overflow:hidden; width:100%; max-width:440px;
+    box-shadow:0 20px 50px rgba(0,0,0,.4);
+  }
+  .lightbox-imgwrap{position:relative; background:var(--ink);}
+  .lightbox-imgwrap img{display:block; width:100%; height:300px; object-fit:cover;}
+  .lightbox-nav{
+    position:absolute; top:50%; transform:translateY(-50%); width:36px; height:36px; border-radius:50%;
+    background:rgba(255,255,255,.9); border:none; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--ink);
+  }
+  .lightbox-nav:hover{background:#fff;}
+  .lightbox-nav svg{width:18px; height:18px;}
+  .lightbox-prev{left:12px;} .lightbox-next{right:12px;}
+  .lightbox-close{
+    position:absolute; top:10px; right:10px; width:30px; height:30px; border-radius:50%;
+    background:rgba(255,255,255,.9); border:none; cursor:pointer; color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .lightbox-close:hover{background:#fff;}
+  .lightbox-close svg{width:15px; height:15px;}
+  .lightbox-count{
+    position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,.55); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    padding:3px 10px; border-radius:99px;
+  }
+  .lightbox-body{padding:14px 18px 18px;}
+  .lightbox-tag{
+    display:inline-block; font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+    padding:2px 8px; border-radius:20px; color:#fff; margin-bottom:8px;
+  }
+  .lightbox-name{font-family:'Archivo',sans-serif; font-weight:700; font-size:18px; margin:0 0 10px;}
+  .lightbox-data{display:flex; gap:22px;}
+  .lightbox-data .lbl{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); font-weight:600;}
+  .lightbox-data .val{font-family:'IBM Plex Mono',monospace; font-size:13px; margin-top:2px;}
+
   .leaflet-control-attribution{font-size:10px !important; background:rgba(255,255,255,.85) !important;}
   .leaflet-control-zoom{border:none !important; box-shadow:var(--shadow) !important; margin-top:12px !important; margin-left:12px !important;}
   .leaflet-control-zoom a{border-radius:0 !important; color:var(--ink) !important;}
@@ -433,6 +475,33 @@
        </div>
        <div class="profile-chart" id="profileChart"></div>
      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <div class="lightbox-modal">
+    <div class="lightbox-imgwrap">
+      <button class="lightbox-close" id="lightboxClose" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Foto anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <img id="lightboxImg" src="" alt="">
+      <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Foto seguinte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      <span class="lightbox-count" id="lightboxCount"></span>
+    </div>
+    <div class="lightbox-body">
+      <span class="lightbox-tag" id="lightboxTag"></span>
+      <h3 class="lightbox-name" id="lightboxName"></h3>
+      <div class="lightbox-data">
+        <div><div class="lbl">Cota (z)</div><div class="val" id="lightboxElev"></div></div>
+        <div><div class="lbl">Coord. UTM 28N</div><div class="val" id="lightboxUtm"></div></div>
+        <div><div class="lbl">Lat / Lon</div><div class="val" id="lightboxLatLon"></div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -658,7 +727,7 @@ function makeIcon(p, selected){
 function popupHtml(p){
   const cat = CATS[p.cat];
   const img = p.hasImg
-    ? `<a href="${p.img}" target="_blank" rel="noopener"><img class="popup-img" src="${p.img}" loading="lazy" alt="Fotografia do ponto ${p.n}"></a>`
+    ? `<a href="javascript:void(0)" onclick="openLightbox('${p.n}')"><img class="popup-img" src="${p.img}" loading="lazy" alt="Fotografia do ponto ${p.n}"></a>`
     : `<div class="popup-noimg">Sem fotografia disponível</div>`;
   const utm = (p.mE!=null && p.pN!=null)
     ? `${p.mE.toFixed(2)} E / ${p.pN.toFixed(2)} N`
@@ -675,7 +744,7 @@ function popupHtml(p){
         <div class="row"><dt>Coord. UTM 28N</dt><dd>${utm}</dd></div>
         <div class="row"><dt>Lat / Lon</dt><dd>${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}</dd></div>
       </dl>
-      ${p.hasImg ? `<a class="popup-link" href="${p.img}" target="_blank" rel="noopener">Ver fotografia em ecrã inteiro &rarr;</a>` : ''}
+      ${p.hasImg ? `<a class="popup-link" href="javascript:void(0)" onclick="openLightbox('${p.n}')">Ver fotografia em ecrã inteiro &rarr;</a>` : ''}
     </div>`;
 }
 
@@ -699,6 +768,51 @@ function matchesFilter(p){
   if(state.search && !p.n.toLowerCase().includes(state.search)) return false;
   return true;
 }
+
+// ---------------- Photo lightbox ----------------
+const lightboxOverlay = document.getElementById('lightboxOverlay');
+let lightboxList = [];
+let lightboxIndex = 0;
+
+function renderLightbox(){
+  const p = lightboxList[lightboxIndex];
+  const cat = CATS[p.cat];
+  const utm = (p.mE!=null && p.pN!=null) ? `${p.mE.toFixed(2)} E / ${p.pN.toFixed(2)} N` : '&mdash;';
+  document.getElementById('lightboxImg').src = p.img;
+  document.getElementById('lightboxImg').alt = `Fotografia do ponto ${p.n}`;
+  const tag = document.getElementById('lightboxTag');
+  tag.textContent = cat.label;
+  tag.style.background = cat.color;
+  document.getElementById('lightboxName').textContent = p.n;
+  document.getElementById('lightboxElev').textContent = p.e.toFixed(2) + ' m';
+  document.getElementById('lightboxUtm').innerHTML = utm;
+  document.getElementById('lightboxLatLon').textContent = `${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}`;
+  document.getElementById('lightboxCount').textContent = `${lightboxIndex+1} de ${lightboxList.length} fotos`;
+}
+
+function openLightbox(name){
+  lightboxList = POINTS.filter(p => p.hasImg && matchesFilter(p));
+  lightboxIndex = lightboxList.findIndex(p => p.n === name);
+  if(lightboxIndex === -1) lightboxIndex = 0;
+  if(!lightboxList.length) return;
+  renderLightbox();
+  lightboxOverlay.classList.add('open');
+}
+function closeLightbox(){ lightboxOverlay.classList.remove('open'); }
+function lightboxStep(delta){
+  lightboxIndex = (lightboxIndex + delta + lightboxList.length) % lightboxList.length;
+  renderLightbox();
+}
+document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+document.getElementById('lightboxPrev').addEventListener('click', () => lightboxStep(-1));
+document.getElementById('lightboxNext').addEventListener('click', () => lightboxStep(1));
+lightboxOverlay.addEventListener('click', e => { if(e.target === lightboxOverlay) closeLightbox(); });
+window.addEventListener('keydown', e => {
+  if(!lightboxOverlay.classList.contains('open')) return;
+  if(e.key === 'Escape') closeLightbox();
+  else if(e.key === 'ArrowLeft') lightboxStep(-1);
+  else if(e.key === 'ArrowRight') lightboxStep(1);
+});
 
 function rebuildMarkers(){
   markerLayer.clearLayers();
