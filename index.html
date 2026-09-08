@@ -856,7 +856,7 @@ const PROFILE = POINTS.filter(p => p.n !== '0+000').slice().reverse();
 const profilePanel = document.getElementById('profilePanel');
 const profileHeader = document.getElementById('profileHeader');
 const profileChartEl = document.getElementById('profileChart');
-profileChartEl.title = 'Arrasta para ampliar uma zona · duplo-clique para repor';
+profileChartEl.title = 'Scroll para ampliar/reduzir · arrasta para selecionar uma zona · duplo-clique para repor';
 
 profileChartEl.addEventListener('mousemove', e => {
   const tooltip = document.getElementById('pfTooltip');
@@ -1014,6 +1014,39 @@ document.getElementById('pfZoomReset').addEventListener('click', e => {
   zoomRange = null;
   renderProfile();
 });
+
+const PF_MIN_SPAN = 250; // metros - nao ampliar mais do que isto
+profileChartEl.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = profileChartEl.getBoundingClientRect();
+  const innerW = rect.width - PF_PAD.l - PF_PAD.r;
+  if(innerW <= 0) return;
+  const px = Math.min(Math.max(e.clientX - rect.left, PF_PAD.l), rect.width - PF_PAD.r);
+  const [d0, d1] = pfCurrentDomain();
+  const mouseDist = d0 + ((px - PF_PAD.l) / innerW) * (d1 - d0);
+  const factor = e.deltaY < 0 ? 0.82 : 1/0.82; // scroll para cima = ampliar
+  const [fullMin, fullMax] = pfFullExtent();
+  let newMin = mouseDist - (mouseDist - d0) * factor;
+  let newMax = mouseDist + (d1 - mouseDist) * factor;
+  let newSpan = newMax - newMin;
+  if(newSpan >= fullMax - fullMin){
+    zoomRange = null;
+    renderProfile();
+    return;
+  }
+  if(newSpan < PF_MIN_SPAN){
+    const mid = (newMin + newMax) / 2;
+    newMin = mid - PF_MIN_SPAN/2;
+    newMax = mid + PF_MIN_SPAN/2;
+    newSpan = PF_MIN_SPAN;
+  }
+  if(newMin < fullMin){ newMax += (fullMin - newMin); newMin = fullMin; }
+  if(newMax > fullMax){ newMin -= (newMax - fullMax); newMax = fullMax; }
+  newMin = Math.max(fullMin, newMin);
+  newMax = Math.min(fullMax, newMax);
+  zoomRange = { min:newMin, max:newMax };
+  renderProfile();
+}, { passive:false });
 
 profileHeader.addEventListener('click', () => {
   profilePanel.classList.toggle('collapsed');
