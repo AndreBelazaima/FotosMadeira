@@ -6,6 +6,10 @@
 <title>Nivelamento Funchal &ndash; Ponta de São Lourenço</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+  integrity="sha256-YU3qCpj/P06tdPBJGPax0bm6Q1wltfwjsho5TR4+TYc=" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+  integrity="sha256-YSWCMtmNZNwqex4CEw1nQhvFub2lmU7vcCKP+XVwwXA=" crossorigin="">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -508,6 +512,8 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"
+  integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin=""></script>
 <script>
 const POINTS =﻿[
 {n:"0+000",lat:32.644786,lon:-16.910749,e:0,img:"",mE:null,pN:null},
@@ -705,7 +711,20 @@ btnSat.addEventListener('click', () => {
 L.control.scale({ imperial:false, position:'bottomleft' }).addTo(map);
 
 // ---------------- Markers ----------------
-const markerLayer = L.layerGroup().addTo(map);
+const markerLayer = L.markerClusterGroup({
+  maxClusterRadius: 55,
+  spiderfyOnMaxZoom: true,
+  showCoverageOnHover: false,
+  iconCreateFunction: function(cluster){
+    const count = cluster.getChildCount();
+    const size = Math.min(30 + Math.sqrt(count)*9, 60);
+    return L.divIcon({
+      html: `<div style="width:${size}px; height:${size}px; border-radius:50%; background:var(--gold); border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.3); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Sans',sans-serif; font-weight:600; color:#4A3300; font-size:${size>42?14:12}px;">${count}</div>`,
+      className: 'pt-cluster',
+      iconSize: [size, size]
+    });
+  }
+}).addTo(map);
 const markersByName = {};
 
 function makeIcon(p, selected){
@@ -873,8 +892,12 @@ function selectPoint(name, flyTo){
   if(!p) return;
   const marker = markersByName[name];
   if(!markerLayer.hasLayer(marker)) markerLayer.addLayer(marker);
-  if(flyTo) map.flyTo([p.lat, p.lon], Math.max(map.getZoom(), 16), { duration:.6 });
-  marker.openPopup();
+  if(flyTo){
+    map.flyTo([p.lat, p.lon], Math.max(map.getZoom(), 16), { duration:.6 });
+    map.once('moveend', () => markerLayer.zoomToShowLayer(marker, () => marker.openPopup()));
+  } else {
+    marker.openPopup();
+  }
   renderList();
   if(!profilePanel.classList.contains('collapsed')) renderProfile();
   if(window.innerWidth <= 860) closeSidebar();
