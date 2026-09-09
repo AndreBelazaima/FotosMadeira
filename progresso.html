@@ -95,7 +95,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 09/09/2026 18:28</div>
+  <div class="updated">Atualizado em 09/09/2026 18:40</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -197,7 +197,7 @@ function badge(text){ const ok = text==='Aprovado'; return `<span class="badge $
   const totalLeitMira = LINES.reduce((s,l)=>s+l.n_leituras_mira,0);
   const pctForaMira = totalLeitMira? (totalForaMira/totalLeitMira*100):0;
   const kpis = [
-    {label:'Comprimento total', value: fmt(totalKm,2)+' km'},
+    {label:'Comprimento total', value: fmt(PROGRESS.done_km,2)+' km', title:'Percurso num so sentido, somado a partir das distancias de vante reais de cada linha (nao usa o campo "Length" da Galileo2000, que soma nivelamento+contra-nivelamento).'},
     {label:'Estacoes', value: totalEst},
     {label:'Rendimento medio', value: fmt(rend,0)+' m/h'},
     {label:'Linhas aprovadas', value: aprov+'/'+LINES.length, cls: aprov===LINES.length?'good':'bad'},
