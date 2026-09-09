@@ -95,7 +95,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 09/09/2026 10:34</div>
+  <div class="updated">Atualizado em 09/09/2026 10:42</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -346,11 +346,10 @@ document.getElementById('chart-mira-note').textContent = LINES.length>TOP_N ? `A
 
 const lineCols = [
   {k:'linha', h:'Linha'}, {k:'estado', h:'Estado'},
-  {k:'resultado', h:'Resultado'}, {k:'resultado_tecnico', h:'Result. tecnico'},
-  {k:'ef', h:'EF (mm)', num:1, d:2}, {k:'toll', h:'Toll (mm)', num:1, d:2}, {k:'tol_tecnica', h:'Tol. 1,5√K', num:1, d:2},
-  {k:'estacoes', h:'Estacoes', num:1},
+  {k:'ef', h:'EF (mm)', num:1, d:2}, {k:'toll', h:'Toll (mm)', num:1, d:2},
+  {k:'resultado', h:'Resultado'}, {k:'tol_tecnica', h:'Tol. 1,5√K', num:1, d:2}, {k:'resultado_tecnico', h:'Result. tecnico'},
   {k:'comprimento', h:'Comp. (m)', num:1, d:1}, {k:'comprimento_um_sentido', h:'Comp. 1 sentido (m)', num:1, d:1}, {k:'declive', h:'Declive (%)', num:1, d:1, pct:1},
-  {k:'estacoes_km', h:'Estacoes/km', num:1, d:0}, {k:'duracao_h', h:'Duracao (h)', num:1, d:2},
+  {k:'estacoes', h:'Estacoes', num:1}, {k:'estacoes_km', h:'Estacoes/km', num:1, d:0}, {k:'duracao_h', h:'Duracao (h)', num:1, d:2},
   {k:'rendimento', h:'Rend. (m/h)', num:1, d:0},
   {k:'tempo_medio_min', h:'Tempo/estacao (min)', num:1, d:1},
   {k:'taxa_rep', h:'Repeticao (%)', num:1, d:1, pct:1}, {k:'pontos_controlo', h:'Ctrl (C)', num:1},
