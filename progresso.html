@@ -38,7 +38,7 @@
   .nav-link{margin-left:auto; font-size:12.5px; font-weight:600; color:var(--ink); text-decoration:none; border:1px solid var(--line-strong); border-radius:8px; padding:8px 14px; white-space:nowrap;}
   .nav-link:hover{border-color:var(--gold);}
 
-  .page{max-width:1180px; margin:0 auto; padding:26px 20px 60px; display:flex; flex-direction:column; gap:20px;}
+  .page{max-width:1420px; margin:0 auto; padding:26px 20px 60px; display:flex; flex-direction:column; gap:20px;}
   .updated{font-size:12px; color:var(--ink-soft);}
 
   .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;}
@@ -95,7 +95,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 09/09/2026 10:27</div>
+  <div class="updated">Atualizado em 09/09/2026 10:34</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -345,11 +345,12 @@ drawBarChart('chart-mira', miraTop.map(l=>({label:l.linha, value:l.pct_fora_mira
 document.getElementById('chart-mira-note').textContent = LINES.length>TOP_N ? `A mostrar as ${TOP_N} linhas com mais leituras fora da zona segura, de ${LINES.length}. Tabela abaixo tem todas.` : '';
 
 const lineCols = [
-  {k:'linha', h:'Linha'}, {k:'estado', h:'Estado'}, {k:'estacoes', h:'Estacoes', num:1},
+  {k:'linha', h:'Linha'}, {k:'estado', h:'Estado'},
+  {k:'resultado', h:'Resultado'}, {k:'resultado_tecnico', h:'Result. tecnico'},
+  {k:'ef', h:'EF (mm)', num:1, d:2}, {k:'toll', h:'Toll (mm)', num:1, d:2}, {k:'tol_tecnica', h:'Tol. 1,5√K', num:1, d:2},
+  {k:'estacoes', h:'Estacoes', num:1},
   {k:'comprimento', h:'Comp. (m)', num:1, d:1}, {k:'comprimento_um_sentido', h:'Comp. 1 sentido (m)', num:1, d:1}, {k:'declive', h:'Declive (%)', num:1, d:1, pct:1},
   {k:'estacoes_km', h:'Estacoes/km', num:1, d:0}, {k:'duracao_h', h:'Duracao (h)', num:1, d:2},
-  {k:'ef', h:'EF (mm)', num:1, d:2}, {k:'toll', h:'Toll (mm)', num:1, d:2},
-  {k:'resultado', h:'Resultado'}, {k:'tol_tecnica', h:'Tol. 1,5√K', num:1, d:2}, {k:'resultado_tecnico', h:'Result. tecnico'},
   {k:'rendimento', h:'Rend. (m/h)', num:1, d:0},
   {k:'tempo_medio_min', h:'Tempo/estacao (min)', num:1, d:1},
   {k:'taxa_rep', h:'Repeticao (%)', num:1, d:1, pct:1}, {k:'pontos_controlo', h:'Ctrl (C)', num:1},
