@@ -800,7 +800,7 @@ function popupHtml(p){
         <div class="row"><dt>Coord. UTM 28N</dt><dd>${utm}</dd></div>
         <div class="row"><dt>Lat / Lon</dt><dd>${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}</dd></div>
       </dl>
-      ${p.hasImg ? `<a class="popup-link" href="javascript:void(0)" onclick="openLightbox('${p.n}')">Ver fotografia em ecrã inteiro &rarr;</a>` : ''}
+      ${p.hasImg ? `<a class="popup-link" href="${p.img}" target="_blank" rel="noopener">Ver fotografia em ecrã inteiro &rarr;</a>` : ''}
     </div>`;
 }
 
