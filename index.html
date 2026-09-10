@@ -266,19 +266,22 @@
   .pt-label::before{display:none;}
   .pt-label.dim{opacity:.55;}
   .ls15-label{
-    background:var(--cat-no); border:1px solid var(--cat-no); border-radius:5px;
-    padding:1px 6px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700;
-    color:#fff; box-shadow:0 1px 3px rgba(34,37,42,.28); pointer-events:none; white-space:nowrap;
+    background:var(--cat-no); border:1px solid var(--cat-no); border-radius:6px;
+    padding:2px 8px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700;
+    color:#fff; box-shadow:0 2px 7px rgba(193,71,29,.55); pointer-events:none; white-space:nowrap;
   }
   .ls15-label::before{display:none;}
-  .ls15-dot{width:16px; height:16px; border-radius:50%; background:var(--cat-no); border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.35); position:relative;}
+  .ls15-dot{
+    width:22px; height:22px; border-radius:50%; background:var(--cat-no); border:3px solid #fff;
+    box-shadow:0 1px 5px rgba(0,0,0,.4), 0 0 0 5px rgba(193,71,29,.30); position:relative;
+  }
   .ls15-dot::after{
-    content:''; position:absolute; inset:-6px; border-radius:50%; border:2px solid var(--cat-no);
-    animation:ls15pulse 1.8s ease-out infinite;
+    content:''; position:absolute; inset:-9px; border-radius:50%; border:2.5px solid var(--cat-no);
+    animation:ls15pulse 1.6s ease-out infinite;
   }
   @keyframes ls15pulse{
-    0%{ transform:scale(.6); opacity:.9; }
-    100%{ transform:scale(1.9); opacity:0; }
+    0%{ transform:scale(.55); opacity:.95; }
+    100%{ transform:scale(2.3); opacity:0; }
   }
   .leaflet-popup-content-wrapper{border-radius:14px; box-shadow:0 10px 34px rgba(34,37,42,.25);}
   .leaflet-popup-content{margin:0; width:296px !important;}
@@ -738,9 +741,9 @@ const markerLayer = L.markerClusterGroup({
   showCoverageOnHover: false,
   iconCreateFunction: function(cluster){
     const count = cluster.getChildCount();
-    const size = Math.min(30 + Math.sqrt(count)*9, 60);
+    const size = Math.min(20 + Math.sqrt(count)*6, 40);
     return L.divIcon({
-      html: `<div style="width:${size}px; height:${size}px; border-radius:50%; background:var(--gold); border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.3); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Sans',sans-serif; font-weight:600; color:#4A3300; font-size:${size>42?14:12}px;">${count}</div>`,
+      html: `<div style="width:${size}px; height:${size}px; border-radius:50%; background:var(--gold); border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.3); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Sans',sans-serif; font-weight:600; color:#4A3300; font-size:${size>32?12:10.5}px;">${count}</div>`,
       className: 'pt-cluster',
       iconSize: [size, size]
     });
@@ -828,13 +831,13 @@ if (typeof LS15_POS !== 'undefined' && LS15_POS) {
   const ls15Icon = L.divIcon({
     className: 'ls15-marker',
     html: `<div class="ls15-dot"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-    popupAnchor: [0, -8]
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+    popupAnchor: [0, -11]
   });
   ls15Marker = L.marker([LS15_POS.lat, LS15_POS.lon], { icon: ls15Icon, zIndexOffset: 1000 });
   ls15Marker.bindPopup(ls15PopupHtml(LS15_POS), { className:'geoide-popup', maxWidth:320, minWidth:296 });
-  ls15Marker.bindTooltip('LS15', { permanent:true, direction:'right', offset:[10,0], className:'ls15-label', interactive:false });
+  ls15Marker.bindTooltip('LS15', { permanent:true, direction:'right', offset:[14,0], className:'ls15-label', interactive:false });
   ls15Marker.addTo(map);
 }
 document.getElementById('ls15Toggle').addEventListener('change', e => {
