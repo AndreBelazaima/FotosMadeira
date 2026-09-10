@@ -97,7 +97,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 10/09/2026 18:29</div>
+  <div class="updated">Atualizado em 10/09/2026 18:34</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -203,7 +203,6 @@ function badge(text){ const ok = text==='Aprovado'; return `<span class="badge $
   const totalDur = LINES.reduce((s,l)=>s+l.duracao_h,0);
   const rend = totalDur? (PROGRESS.done_km*1000/totalDur):0;
   const aprov = LINES.filter(l=>l.resultado==='Aprovado').length;
-  const aprovTec = LINES.filter(l=>l.resultado_tecnico==='Aprovado').length;
   const totalForaMira = LINES.reduce((s,l)=>s+l.n_fora_mira,0);
   const totalLeitMira = LINES.reduce((s,l)=>s+l.n_leituras_mira,0);
   const pctForaMira = totalLeitMira? (totalForaMira/totalLeitMira*100):0;
@@ -212,7 +211,6 @@ function badge(text){ const ok = text==='Aprovado'; return `<span class="badge $
     {label:'Estacoes', value: totalEst},
     {label:'Rendimento medio', value: fmt(rend,0)+' m/h'},
     {label:'Linhas aprovadas', value: aprov+'/'+LINES.length, cls: aprov===LINES.length?'good':'bad'},
-    {label:'Aprovadas (1,5mm√K)', value: aprovTec+'/'+LINES.length, cls: aprovTec===LINES.length?'good':'bad'},
     {label:'Km em falta', value: fmt(PROGRESS.remaining_km,2)+' / '+fmt(PROGRESS.total_km,2)+' km', cls: 'compact ' + (PROGRESS.remaining_km!=null && PROGRESS.remaining_km<=0.05?'good':''), title: PROGRESS.remaining_metodo==='tracado_gps' ? `Tracado (${fmt(PROGRESS.total_km*1000,0)} m) menos a distancia da ultima posicao GPS conhecida (ponto ${PROGRESS.remaining_gps_ponto}, registado ao terminar a ${PROGRESS.remaining_gps_linha}).` : 'Ainda sem nenhuma posicao GPS disponivel na tabela de coordenadas do Galileo.'},
     {label:'Fora da zona segura (mira)', value: fmt(pctForaMira,1)+'%', cls: pctForaMira<=5?'good':'bad'},
   ];
@@ -341,7 +339,7 @@ document.getElementById('chart-mira-note').textContent = LINES.length>TOP_N ? `A
 const lineCols = [
   {k:'linha', h:'Linha'}, {k:'estado', h:'Estado'},
   {k:'ef', h:'EF (mm)', num:1, d:2}, {k:'toll', h:'Toll (mm)', num:1, d:2},
-  {k:'resultado', h:'Resultado'}, {k:'tol_tecnica', h:'Tol. 1,5√K', num:1, d:2}, {k:'resultado_tecnico', h:'Result. tecnico'},
+  {k:'resultado', h:'Resultado'},
   {k:'comprimento_galileo_main', h:'Comp. (m)', num:1, d:1}, {k:'comprimento_um_sentido', h:'Comp. 1 sentido (m)', num:1, d:1}, {k:'declive', h:'Declive (%)', num:1, d:1, pct:1},
   {k:'estacoes', h:'Estacoes', num:1}, {k:'estacoes_km', h:'Estacoes/km', num:1, d:0}, {k:'duracao_h', h:'Duracao (h)', num:1, d:2},
   {k:'rendimento', h:'Rend. (m/h)', num:1, d:0},
@@ -464,7 +462,6 @@ function renderLineCard(lineName){
     mk('Estado', l.estado.startsWith('Conclu')?l.estado:`<span class="badge live">${l.estado}</span>`) +
     mk('EF / Toll (mm)', fmt(l.ef,2)+' / '+fmt(l.toll,2)) +
     mk('Resultado', badge(l.resultado)) +
-    mk('Resultado tecnico (1,5√K)', badge(l.resultado_tecnico)) +
     mk('Rendimento', fmt(l.rendimento,0)+' m/h') +
     mk('Tempo/estacao', fmt(l.tempo_medio_min,1)+' min') +
     mk('Taxa repeticao', fmt(l.taxa_rep*100,1)+'%') +
