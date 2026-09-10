@@ -97,7 +97,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 10/09/2026 18:04</div>
+  <div class="updated">Atualizado em 10/09/2026 18:11</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -199,10 +199,9 @@ function fmtDate(iso){ const d=new Date(iso); return d.toLocaleDateString('pt-PT
 function badge(text){ const ok = text==='Aprovado'; return `<span class="badge ${ok?'ok':'no'}">${text}</span>`; }
 
 (function renderKPIs(){
-  const totalKm = LINES.reduce((s,l)=>s+l.comprimento,0)/1000;
   const totalEst = LINES.reduce((s,l)=>s+l.estacoes,0);
   const totalDur = LINES.reduce((s,l)=>s+l.duracao_h,0);
-  const rend = totalDur? (totalKm*1000/totalDur):0;
+  const rend = totalDur? (PROGRESS.done_km*1000/totalDur):0;
   const aprov = LINES.filter(l=>l.resultado==='Aprovado').length;
   const aprovTec = LINES.filter(l=>l.resultado_tecnico==='Aprovado').length;
   const totalForaMira = LINES.reduce((s,l)=>s+l.n_fora_mira,0);
