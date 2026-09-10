@@ -743,6 +743,10 @@ const markerLayer = L.markerClusterGroup({
   maxClusterRadius: 55,
   spiderfyOnMaxZoom: true,
   showCoverageOnHover: false,
+  // Mantem tudo agrupado ate a mesma escala em que as estacas passam a mostrar
+  // todos os nomes (ZOOM_ALL_LABELS, mais abaixo) - assim os nomes visiveis nao
+  // mudam por zoom (ex: escala 3km vs 1km), so ao passar essa escala de uma vez.
+  disableClusteringAtZoom: 14,
   iconCreateFunction: function(cluster){
     const count = cluster.getChildCount();
     const size = Math.min(20 + Math.sqrt(count)*6, 40);
