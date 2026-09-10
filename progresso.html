@@ -97,7 +97,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 10/09/2026 16:15</div>
+  <div class="updated">Atualizado em 10/09/2026 16:18</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -256,7 +256,7 @@ function drawBarChart(svgId, items){
   });
   svg.innerHTML = out;
 }
-const TOP_N = 12;
+const TOP_N = 6;
 function topN(list, keyFn, n){ return list.slice().sort((a,b)=>keyFn(b)-keyFn(a)).slice(0,n); }
 
 const efTop = topN(LINES, l=>l.ef_pct, TOP_N);
@@ -270,8 +270,8 @@ document.getElementById('chart-rend-note').textContent = LINES.length>TOP_N ? `A
 function drawPairedBarChart(svgId, items, colorA, colorB){
   const svg = document.getElementById(svgId);
   const W=860, padL=90, padR=50, padT=10, padB=10;
-  const bandH = Math.min(40, 320/items.length);
-  const barH = bandH*0.38;
+  const barH = 17; // mesma grossura das barras de drawBarChart
+  const bandH = barH*2 + 9;
   const maxV = Math.max(...items.map(i=>Math.max(i.avg,i.max)), 1) * 1.15;
   const scale = (W-padL-padR)/maxV;
   const svgH = items.length*bandH + padT + padB;
