@@ -845,9 +845,41 @@ document.getElementById('ls15Toggle').addEventListener('change', e => {
   if (e.target.checked) ls15Marker.addTo(map); else map.removeLayer(ls15Marker);
 });
 
+// ---------------- Nomes das estacas em funcao do zoom ----------------
+// As estacas (pontos numerados, ex: 8000) cobrem todo o tracado a cada ~800m e
+// ficam sempre visiveis no mapa. Com o mapa muito afastado (escala ~1km) mostrar
+// o nome de todas ficaria ilegivel, por isso so aparece 1 em cada ~5km; a partir
+// da escala 500m (mais aproximado) mostram-se os nomes de todas.
+function chainageOf(name){
+  const m = name.match(/^(\d+)(?:\+(\d{3}))?$/);
+  if(!m) return null;
+  return m[2] !== undefined ? parseInt(m[1],10)*1000 + parseInt(m[2],10) : parseInt(m[1],10);
+}
+const ZOOM_ALL_LABELS = 14;   // escala <=500m: mostra o nome de todas as estacas
+const SPARSE_STEP_M = 4800;   // escala >=1km: mostra so a cada ~5km
+function updateEstacaLabels(){
+  const toggleOn = document.getElementById('labelToggle').checked;
+  const showAll = map.getZoom() >= ZOOM_ALL_LABELS;
+  POINTS.forEach(p => {
+    if(p.cat !== 'estaca') return;
+    const marker = markersByName[p.n];
+    if(!marker) return;
+    const chainage = chainageOf(p.n);
+    const keep = toggleOn && (showAll || (chainage !== null && chainage % SPARSE_STEP_M === 0));
+    keep ? marker.openTooltip() : marker.closeTooltip();
+  });
+}
+map.on('zoomend', updateEstacaLabels);
+updateEstacaLabels();
+
 document.getElementById('labelToggle').addEventListener('change', e => {
   const show = e.target.checked;
-  Object.values(markersByName).forEach(m => { show ? m.openTooltip() : m.closeTooltip(); });
+  POINTS.forEach(p => {
+    if(p.cat === 'estaca') return; // tratado por updateEstacaLabels (depende tambem do zoom)
+    const m = markersByName[p.n];
+    if(m) show ? m.openTooltip() : m.closeTooltip();
+  });
+  updateEstacaLabels();
 });
 
 // ---------------- Filtering ----------------
