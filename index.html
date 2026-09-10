@@ -885,7 +885,8 @@ function updateLabelsForZoom(){
   });
 }
 map.on('zoomend', updateLabelsForZoom);
-updateLabelsForZoom();
+// A chamada inicial e feita em refreshAll() (mais abaixo), depois dos marcadores
+// serem mesmo adicionados ao mapa - antes disso closeTooltip() nao tem efeito.
 
 document.getElementById('labelToggle').addEventListener('change', updateLabelsForZoom);
 
@@ -991,6 +992,10 @@ function updateVisibleBadge(){
 
 function refreshAll(){
   rebuildMarkers();
+  // rebuildMarkers() volta a adicionar os marcadores ao mapa, o que reabre
+  // sempre os tooltips permanentes (comportamento por omissao do Leaflet) -
+  // por isso a logica de nomes por zoom tem de correr sempre depois disto.
+  updateLabelsForZoom();
   renderList();
   updateVisibleBadge();
   if(!profilePanel.classList.contains('collapsed')) renderProfile();
