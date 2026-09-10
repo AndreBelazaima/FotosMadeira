@@ -254,6 +254,9 @@
     padding:4px 8px; border-radius:6px; white-space:nowrap; transform:translate(-50%,-125%);
   }
   .profile-chart .pf-guide{stroke:var(--ink-soft); stroke-width:1; stroke-dasharray:2,3;}
+  .profile-chart .pf-ls15-guide{stroke:var(--cat-no); stroke-width:1; stroke-dasharray:2,3;}
+  .profile-chart .pf-ls15-dot{fill:var(--cat-no); stroke:#fff; stroke-width:1.5;}
+  .profile-chart .pf-ls15-label{font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:700; fill:var(--cat-no);}
 
 
   /* ---------- Leaflet overrides ---------- */
@@ -1095,6 +1098,34 @@ const PROFILE = POINTS.filter(p => p.n !== '0+000').slice().reverse();
   });
 })();
 
+// Projeta uma posicao GPS (ex: LS15) no eixo de distancia do perfil, encontrando
+// o ponto mais proximo ao longo da poligonal PROFILE (aproximacao equirretangular
+// local, suficiente a esta escala) - devolve a distancia acumulada equivalente.
+function projectDistanceAlongProfile(lat, lon){
+  const mPerDegLat = 111320;
+  const mPerDegLon = 111320 * Math.cos(lat * Math.PI / 180);
+  const toXY = (plat, plon) => [plon * mPerDegLon, plat * mPerDegLat];
+  const [qx, qy] = toXY(lat, lon);
+  let best = null;
+  for(let i = 0; i < PROFILE.length - 1; i++){
+    const a = PROFILE[i], b = PROFILE[i+1];
+    const [ax, ay] = toXY(a.lat, a.lon);
+    const [bx, by] = toXY(b.lat, b.lon);
+    const dx = bx-ax, dy = by-ay;
+    const len2 = dx*dx + dy*dy;
+    let t = len2 > 0 ? ((qx-ax)*dx + (qy-ay)*dy) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    const distToSeg = Math.hypot(qx - (ax+t*dx), qy - (ay+t*dy));
+    if(best === null || distToSeg < best.distToSeg){
+      best = { distToSeg, dist: a.dist + t*(b.dist - a.dist) };
+    }
+  }
+  return best;
+}
+const LS15_PROFILE = (typeof LS15_POS !== 'undefined' && LS15_POS)
+  ? projectDistanceAlongProfile(LS15_POS.lat, LS15_POS.lon)
+  : null;
+
 const profilePanel = document.getElementById('profilePanel');
 const profileHeader = document.getElementById('profileHeader');
 const profileChartEl = document.getElementById('profileChart');
@@ -1189,6 +1220,17 @@ function renderProfile(){
     if(active) dots += `<circle class="pf-pt-hit" data-name="${p.n}" data-e="${p.e.toFixed(1)}" cx="${cx}" cy="${cy}" r="9"></circle>`;
   });
 
+  let ls15Marker = '';
+  if(LS15_PROFILE && LS15_PROFILE.dist >= minDist && LS15_PROFILE.dist <= maxDist){
+    const lx = x(LS15_PROFILE.dist).toFixed(1);
+    const ly = y(LS15_POS.elev).toFixed(1);
+    const labelAbove = LS15_POS.elev/yMax < 0.85;
+    const ltY = labelAbove ? (parseFloat(ly)-9).toFixed(1) : (parseFloat(ly)+15).toFixed(1);
+    ls15Marker = `<line class="pf-ls15-guide" x1="${lx}" x2="${lx}" y1="${padT}" y2="${baseY.toFixed(1)}"/>
+    <circle class="pf-ls15-dot" cx="${lx}" cy="${ly}" r="4"></circle>
+    <text class="pf-ls15-label" x="${lx}" y="${ltY}" text-anchor="middle">LS15</text>`;
+  }
+
   profileChartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
     <defs><linearGradient id="pfGradient" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#D9A115" stop-opacity=".28"/>
@@ -1200,6 +1242,7 @@ function renderProfile(){
     <path class="pf-area" d="${areaPath}"/>
     <path class="pf-line" d="${linePath}"/>
     ${dots}
+    ${ls15Marker}
     ${xLabels}
   </svg><div class="pf-tooltip" id="pfTooltip"></div>`;
 
