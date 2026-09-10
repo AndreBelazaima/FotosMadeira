@@ -818,7 +818,7 @@ function ls15PopupHtml(p){
   return `
     <div class="geoide-popup">
       <div class="popup-head">
-        <span class="tag" style="--c:#C1471D">Nível LS15 &ndash; posição GPS</span>
+        <span class="tag" style="--c:#C1471D">Equipa &ndash; posição GPS</span>
       </div>
       <div style="padding:0 16px 10px 16px;"><h3>${p.ponto || '&mdash;'}</h3></div>
       <dl class="popup-data">
@@ -840,7 +840,7 @@ if (typeof LS15_POS !== 'undefined' && LS15_POS) {
   });
   ls15Marker = L.marker([LS15_POS.lat, LS15_POS.lon], { icon: ls15Icon, zIndexOffset: 1000 });
   ls15Marker.bindPopup(ls15PopupHtml(LS15_POS), { className:'geoide-popup', maxWidth:320, minWidth:296 });
-  ls15Marker.bindTooltip('LS15', { permanent:true, direction:'right', offset:[14,0], className:'ls15-label', interactive:false });
+  ls15Marker.bindTooltip('Equipa', { permanent:true, direction:'right', offset:[14,0], className:'ls15-label', interactive:false });
   ls15Marker.addTo(map);
 }
 document.getElementById('ls15Toggle').addEventListener('change', e => {
@@ -1228,7 +1228,7 @@ function renderProfile(){
     const ltY = labelAbove ? (parseFloat(ly)-9).toFixed(1) : (parseFloat(ly)+15).toFixed(1);
     ls15Marker = `<line class="pf-ls15-guide" x1="${lx}" x2="${lx}" y1="${padT}" y2="${baseY.toFixed(1)}"/>
     <circle class="pf-ls15-dot" cx="${lx}" cy="${ly}" r="4"></circle>
-    <text class="pf-ls15-label" x="${lx}" y="${ltY}" text-anchor="middle">LS15</text>`;
+    <text class="pf-ls15-label" x="${lx}" y="${ltY}" text-anchor="middle">Equipa</text>`;
   }
 
   profileChartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
