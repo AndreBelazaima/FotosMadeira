@@ -470,6 +470,10 @@
           <input type="checkbox" id="labelToggle" checked>
           Nomes dos pontos
         </label>
+        <label>
+          <input type="checkbox" id="ls15Toggle" checked>
+          Localização da equipa
+        </label>
       </div>
 
       <button class="locate-fab" id="fitAll" title="Repor vista geral" aria-label="Repor vista geral">
@@ -819,6 +823,7 @@ function ls15PopupHtml(p){
       </dl>
     </div>`;
 }
+let ls15Marker = null;
 if (typeof LS15_POS !== 'undefined' && LS15_POS) {
   const ls15Icon = L.divIcon({
     className: 'ls15-marker',
@@ -827,11 +832,15 @@ if (typeof LS15_POS !== 'undefined' && LS15_POS) {
     iconAnchor: [8, 8],
     popupAnchor: [0, -8]
   });
-  const ls15Marker = L.marker([LS15_POS.lat, LS15_POS.lon], { icon: ls15Icon, zIndexOffset: 1000 });
+  ls15Marker = L.marker([LS15_POS.lat, LS15_POS.lon], { icon: ls15Icon, zIndexOffset: 1000 });
   ls15Marker.bindPopup(ls15PopupHtml(LS15_POS), { className:'geoide-popup', maxWidth:320, minWidth:296 });
   ls15Marker.bindTooltip('LS15', { permanent:true, direction:'right', offset:[10,0], className:'ls15-label', interactive:false });
   ls15Marker.addTo(map);
 }
+document.getElementById('ls15Toggle').addEventListener('change', e => {
+  if (!ls15Marker) return;
+  if (e.target.checked) ls15Marker.addTo(map); else map.removeLayer(ls15Marker);
+});
 
 document.getElementById('labelToggle').addEventListener('change', e => {
   const show = e.target.checked;
