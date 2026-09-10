@@ -1126,7 +1126,9 @@ function projectDistanceAlongProfile(lat, lon){
     t = Math.max(0, Math.min(1, t));
     const distToSeg = Math.hypot(qx - (ax+t*dx), qy - (ay+t*dy));
     if(best === null || distToSeg < best.distToSeg){
-      best = { distToSeg, dist: a.dist + t*(b.dist - a.dist) };
+      // Cota interpolada ao longo do perfil (nao a do GPS do telemovel, que e
+      // muito menos precisa) - assim o marcador cai sempre em cima da linha.
+      best = { distToSeg, dist: a.dist + t*(b.dist - a.dist), elev: a.e + t*(b.e - a.e) };
     }
   }
   return best;
@@ -1232,8 +1234,8 @@ function renderProfile(){
   let ls15Marker = '';
   if(LS15_PROFILE && LS15_PROFILE.dist >= minDist && LS15_PROFILE.dist <= maxDist){
     const lx = x(LS15_PROFILE.dist).toFixed(1);
-    const ly = y(LS15_POS.elev).toFixed(1);
-    const labelAbove = LS15_POS.elev/yMax < 0.85;
+    const ly = y(LS15_PROFILE.elev).toFixed(1);
+    const labelAbove = LS15_PROFILE.elev/yMax < 0.85;
     const ltY = labelAbove ? (parseFloat(ly)-9).toFixed(1) : (parseFloat(ly)+15).toFixed(1);
     ls15Marker = `<line class="pf-ls15-guide" x1="${lx}" x2="${lx}" y1="${padT}" y2="${baseY.toFixed(1)}"/>
     <circle class="pf-ls15-dot" cx="${lx}" cy="${ly}" r="4"></circle>
