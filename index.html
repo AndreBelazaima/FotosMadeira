@@ -256,6 +256,7 @@
   .profile-chart .pf-guide{stroke:var(--ink-soft); stroke-width:1; stroke-dasharray:2,3;}
   .profile-chart .pf-ls15-guide{stroke:var(--cat-no); stroke-width:1; stroke-dasharray:2,3;}
   .profile-chart .pf-ls15-dot{fill:var(--cat-no); stroke:#fff; stroke-width:1.5;}
+  .profile-chart .pf-ls15-hit{cursor:pointer;}
   .profile-chart .pf-ls15-label{font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:700; fill:var(--cat-no);}
 
 
@@ -1231,14 +1232,15 @@ function renderProfile(){
     if(active) dots += `<circle class="pf-pt-hit" data-name="${p.n}" data-e="${p.e.toFixed(1)}" cx="${cx}" cy="${cy}" r="9"></circle>`;
   });
 
-  let ls15Marker = '';
+  let ls15MarkerSvg = '';
   if(LS15_PROFILE && LS15_PROFILE.dist >= minDist && LS15_PROFILE.dist <= maxDist){
     const lx = x(LS15_PROFILE.dist).toFixed(1);
     const ly = y(LS15_PROFILE.elev).toFixed(1);
     const labelAbove = LS15_PROFILE.elev/yMax < 0.85;
     const ltY = labelAbove ? (parseFloat(ly)-9).toFixed(1) : (parseFloat(ly)+15).toFixed(1);
-    ls15Marker = `<line class="pf-ls15-guide" x1="${lx}" x2="${lx}" y1="${padT}" y2="${baseY.toFixed(1)}"/>
+    ls15MarkerSvg = `<line class="pf-ls15-guide" x1="${lx}" x2="${lx}" y1="${padT}" y2="${baseY.toFixed(1)}"/>
     <circle class="pf-ls15-dot" cx="${lx}" cy="${ly}" r="4"></circle>
+    <circle class="pf-ls15-hit" cx="${lx}" cy="${ly}" r="9" fill="transparent"></circle>
     <text class="pf-ls15-label" x="${lx}" y="${ltY}" text-anchor="middle">Equipa</text>`;
   }
 
@@ -1253,12 +1255,20 @@ function renderProfile(){
     <path class="pf-area" d="${areaPath}"/>
     <path class="pf-line" d="${linePath}"/>
     ${dots}
-    ${ls15Marker}
+    ${ls15MarkerSvg}
     ${xLabels}
   </svg><div class="pf-tooltip" id="pfTooltip"></div>`;
 
   profileChartEl.querySelectorAll('.pf-pt-hit').forEach(el => {
     el.addEventListener('click', () => selectPoint(el.dataset.name, true));
+  });
+  const ls15HitEl = profileChartEl.querySelector('.pf-ls15-hit');
+  if(ls15HitEl) ls15HitEl.addEventListener('click', () => {
+    if(!ls15Marker) return;
+    if(!map.hasLayer(ls15Marker)) ls15Marker.addTo(map);
+    map.flyTo([LS15_POS.lat, LS15_POS.lon], Math.max(map.getZoom(), 16), { duration:.6 });
+    map.once('moveend', () => ls15Marker.openPopup());
+    if(window.innerWidth <= 860) closeSidebar();
   });
 
   document.getElementById('pfMin').textContent = Math.min(...PROFILE.map(p=>p.e)).toFixed(1) + ' m';
@@ -1268,7 +1278,7 @@ function renderProfile(){
 
 // ---------------- Zoom (arrastar para selecionar um intervalo) ----------------
 profileChartEl.addEventListener('mousedown', e => {
-  if(e.target.classList && e.target.classList.contains('pf-pt-hit')) return;
+  if(e.target.classList && (e.target.classList.contains('pf-pt-hit') || e.target.classList.contains('pf-ls15-hit'))) return;
   const rect = profileChartEl.getBoundingClientRect();
   const px = e.clientX - rect.left;
   if(px < PF_PAD.l || px > rect.width - PF_PAD.r) return;
