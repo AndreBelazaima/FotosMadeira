@@ -716,7 +716,7 @@ const derivLayer = L.layerGroup();
 (function buildDerivacoes(){
   const label = document.getElementById('derivLabel');
   if(typeof DERIVACOES === 'undefined' || !DERIVACOES.linhas || !DERIVACOES.linhas.length){ if(label) label.hidden = true; return; }
-  const w = DERIVACOES.largura || 3, cor = DERIVACOES.cor || '#FF5500';
+  const w = DERIVACOES.largura || 3, cor = '#1E90FF';   // azul (a cor do KMZ era laranja)
   DERIVACOES.linhas.forEach(seg => {
     let m = 0;
     for(let i = 1; i < seg.length; i++) m += haversine(seg[i-1][0], seg[i-1][1], seg[i][0], seg[i][1]);
