@@ -557,6 +557,10 @@
           <input type="checkbox" id="routeToggle" checked>
           Traçado do nivelamento
         </label>
+        <label id="derivLabel">
+          <input type="checkbox" id="derivToggle" checked>
+          Traçado Derivações
+        </label>
         <label>
           <input type="checkbox" id="labelToggle" checked>
           Nomes dos pontos
@@ -648,6 +652,7 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"
   integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin=""></script>
 <script src="mapdata.js"></script>
+<script src="derivacoes.js"></script>
 <script>
 const CATS = {
   estaca: {label:'Marcas', color:'#D9A115'},
@@ -704,6 +709,27 @@ routeLayer.addTo(map);
 
 document.getElementById('routeToggle').addEventListener('change', e => {
   if(e.target.checked) routeLayer.addTo(map); else map.removeLayer(routeLayer);
+});
+
+// ---------------- Traçado Derivações (KMZ -> derivacoes.js) ----------------
+const derivLayer = L.layerGroup();
+(function buildDerivacoes(){
+  const label = document.getElementById('derivLabel');
+  if(typeof DERIVACOES === 'undefined' || !DERIVACOES.linhas || !DERIVACOES.linhas.length){ if(label) label.hidden = true; return; }
+  const w = DERIVACOES.largura || 3, cor = DERIVACOES.cor || '#FF5500';
+  DERIVACOES.linhas.forEach(seg => {
+    let m = 0;
+    for(let i = 1; i < seg.length; i++) m += haversine(seg[i-1][0], seg[i-1][1], seg[i][0], seg[i][1]);
+    L.polyline(seg, { color:'#fff', weight:w + 4, opacity:.85, lineCap:'round', lineJoin:'round', interactive:false }).addTo(derivLayer);
+    const pl = L.polyline(seg, { color:cor, weight:w + 1, opacity:.95, lineCap:'round', lineJoin:'round' }).addTo(derivLayer);
+    pl.bindTooltip('Deriva\u00e7\u00e3o \u00B7 ' + (m < 1000 ? Math.round(m) + ' m' : (m/1000).toFixed(2).replace('.', ',') + ' km'), { sticky:true, direction:'top', className:'msr-tip' });
+    pl.on('mouseover', () => pl.setStyle({ weight:w + 3 }));
+    pl.on('mouseout', () => pl.setStyle({ weight:w + 1 }));
+  });
+  derivLayer.addTo(map);
+})();
+document.getElementById('derivToggle').addEventListener('change', e => {
+  if(e.target.checked) derivLayer.addTo(map); else map.removeLayer(derivLayer);
 });
 
 // ---------------- Basemap switch ----------------
