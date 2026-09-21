@@ -196,6 +196,75 @@
   }
   .locate-fab svg{width:17px; height:17px; stroke:var(--ink);}
 
+  /* ---------- Medir distancia ao longo do tracado ---------- */
+  .measure-btn{
+    margin-top:4px; padding:8px 8px 5px; border:none; border-top:1px solid var(--line); background:transparent;
+    font-family:inherit; font-size:11.5px; font-weight:600; color:var(--ink); cursor:pointer;
+    display:flex; align-items:center; gap:7px; border-radius:0 0 6px 6px; width:100%; text-align:left;
+  }
+  .measure-btn svg{width:14px; height:14px; stroke:currentColor; flex:0 0 auto;}
+  .measure-btn:hover{background:var(--paper);}
+  .measure-btn.active{background:var(--ink); color:#fff;}
+  .leaflet-container.measuring{cursor:crosshair;}
+  .leaflet-container.measuring .leaflet-interactive{cursor:crosshair;}
+  .measure-panel{
+    position:absolute; top:96px; left:12px; z-index:1000; width:236px; max-width:calc(100% - 24px);
+    background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
+    padding:12px 14px 12px; display:none; max-height:calc(100% - 130px); overflow:auto;
+  }
+  .measure-panel.open{display:block;}
+  .measure-panel.one-leg .mp-legs{display:none;}
+  .mp-head{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;}
+  .mp-head b{font-family:'Archivo',sans-serif; font-size:13.5px; font-weight:700;}
+  .mp-close{
+    width:24px; height:24px; border-radius:6px; border:none; background:transparent; cursor:pointer;
+    color:var(--ink-soft); font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center;
+  }
+  .mp-close:hover{background:var(--paper); color:var(--ink);}
+  .mp-hint{margin:0 0 8px; font-size:11.5px; line-height:1.4; color:var(--ink-soft);}
+  .mp-hint.warn{color:var(--cat-no); font-weight:600;}
+  .mp-legs{list-style:none; margin:0 0 8px; padding:0; display:flex; flex-direction:column; gap:3px;}
+  .mp-legs li{display:flex; justify-content:space-between; gap:10px; font-size:12px; padding:3px 0; border-bottom:1px dashed var(--line);}
+  .mp-legs .lg{color:var(--ink-soft);}
+  .mp-legs .lv{font-family:'IBM Plex Mono',monospace; font-weight:600;}
+  .mp-total{background:var(--paper); border:1px solid var(--line); border-radius:9px; padding:8px 10px; margin-bottom:9px; display:none;}
+  .mp-total.show{display:block;}
+  .mp-total span{display:block; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); font-weight:600;}
+  .mp-total b{display:block; font-family:'IBM Plex Mono',monospace; font-size:21px; font-weight:600; margin-top:1px;}
+  .mp-total em{display:block; font-style:normal; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft);}
+  .mp-actions{display:flex; gap:6px;}
+  .mp-actions button{
+    flex:1; padding:7px 8px; border-radius:8px; border:1px solid var(--line-strong); background:var(--paper);
+    font-family:inherit; font-size:12px; font-weight:500; color:var(--ink); cursor:pointer;
+  }
+  .mp-actions button:hover:not(:disabled){border-color:var(--gold);}
+  .mp-actions button:disabled{opacity:.45; cursor:default;}
+  .msr-pin{
+    width:24px; height:24px; border-radius:50%; background:var(--ink); color:#fff; border:2px solid #fff;
+    box-shadow:0 1px 5px rgba(0,0,0,.5); font:700 11px 'IBM Plex Mono',monospace;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .msr-pin.first{background:var(--gold-dark);}
+  .msr-ghost{width:14px; height:14px; border-radius:50%; background:#fff; border:3px solid #1971C2; box-shadow:0 1px 4px rgba(0,0,0,.5);}
+  .msr-tip{
+    background:rgba(255,255,255,.95); border:1px solid var(--line-strong); border-radius:6px; padding:2px 7px;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:var(--ink);
+    box-shadow:0 1px 4px rgba(34,37,42,.25); white-space:nowrap; pointer-events:none;
+  }
+  .msr-tip::before{display:none;}
+  @media (max-width:860px){
+    .measure-panel{top:auto; bottom:60px; left:12px; right:62px; width:auto; max-width:none; max-height:44%; padding:8px 12px 10px;}
+    .mp-head{margin-bottom:4px;}
+    .measure-panel.has-total .mp-hint{display:none;}
+    .mp-legs{max-height:44px; overflow:auto; flex-direction:row; flex-wrap:wrap; gap:1px 14px; margin-bottom:6px;}
+    .mp-legs li{border:none; padding:0; gap:6px; font-size:11.5px;}
+    .mp-total.show{display:grid; grid-template-columns:1fr auto; column-gap:10px; align-items:baseline; padding:6px 10px; margin-bottom:8px;}
+    .mp-total span{grid-column:1; grid-row:1 / span 2;}
+    .mp-total b{grid-column:2; font-size:17px; margin-top:0; text-align:right;}
+    .mp-total em{grid-column:2; text-align:right; font-size:11px;}
+    .mp-actions button{padding:6px 8px;}
+  }
+
   .visible-badge{
     position:absolute; bottom:26px; left:12px; z-index:999;
     background:rgba(34,37,42,.86); color:#fff; padding:7px 12px; border-radius:20px;
@@ -481,6 +550,21 @@
           <input type="checkbox" id="ls15Toggle" checked>
           Localização da equipa
         </label>
+        <button type="button" class="measure-btn" id="measureBtn" aria-pressed="false" title="Medir a distância entre pontos, seguindo o traçado do nivelamento">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0L2.7 16.7a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4z"/><path d="m7.5 10.5 2 2M10.5 7.5l2 2M13.5 4.5l2 2M4.5 13.5l2 2"/></svg>
+          Medir distância
+        </button>
+      </div>
+
+      <div class="measure-panel" id="measurePanel" role="region" aria-label="Medir distância ao longo do traçado">
+        <div class="mp-head"><b>Medir distância</b><button type="button" class="mp-close" id="mpClose" aria-label="Fechar e limpar medição">&times;</button></div>
+        <p class="mp-hint" id="mpHint"></p>
+        <ol class="mp-legs" id="mpLegs"></ol>
+        <div class="mp-total" id="mpTotal" aria-live="polite"><span>Total ao longo do traçado</span><b id="mpTotalKm"></b><em id="mpTotalM"></em></div>
+        <div class="mp-actions">
+          <button type="button" id="mpUndo" disabled>Desfazer último</button>
+          <button type="button" id="mpClear" disabled>Limpar</button>
+        </div>
       </div>
 
       <button class="locate-fab" id="fitAll" title="Repor vista geral" aria-label="Repor vista geral">
@@ -809,7 +893,10 @@ POINTS.forEach(p => {
   const marker = L.marker([p.lat, p.lon], { icon: makeIcon(p, false) });
   marker.bindPopup(popupHtml(p), { className:'geoide-popup', maxWidth:320, minWidth:296 });
   marker.bindTooltip(p.n, { permanent:true, direction:'right', offset:[9,0], className:'pt-label', interactive:false });
-  marker.on('click', () => selectPoint(p.n, false));
+  marker.on('click', () => {
+    if(Measure.isActive()){ marker.closePopup(); Measure.addPoint(marker.getLatLng()); return; }
+    selectPoint(p.n, false);
+  });
   markersByName[p.n] = marker;
 });
 
@@ -1366,6 +1453,272 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => { if(!profilePanel.classList.contains('collapsed')) renderProfile(); }, 150);
 });
+
+// ---------------- Medir distancia ao longo do tracado ----------------
+// RouteGraph: o ROUTE vira um grafo (vertices = pontos GPS, arestas = troços entre
+// vertices consecutivos, ligando tambem extremos de segmentos a <=10 m). A distancia
+// entre dois pontos e o caminho mais curto POR ESSE GRAFO, ou seja, segue o tracado
+// e nunca corta caminho em linha reta. // <route-graph>
+const RouteGraph = (function(){
+  const EARTH_R = 6371008.8, BRIDGE_M = 10;
+  const nodes = [], adj = [], edges = [], nodeIdx = new Map();
+  function hav(a, b){
+    const r = Math.PI/180, f1 = a[0]*r, f2 = b[0]*r, dF = f2-f1, dL = (b[1]-a[1])*r;
+    const h = Math.sin(dF/2)**2 + Math.cos(f1)*Math.cos(f2)*Math.sin(dL/2)**2;
+    return 2*EARTH_R*Math.asin(Math.sqrt(h));
+  }
+  function nodeFor(pt){
+    const k = pt[0]+','+pt[1];
+    let i = nodeIdx.get(k);
+    if(i === undefined){ i = nodes.length; nodes.push([pt[0], pt[1]]); adj.push([]); nodeIdx.set(k, i); }
+    return i;
+  }
+  function addEdge(a, b){
+    if(a === b) return;
+    const id = edges.length;
+    edges.push({ a, b, len: hav(nodes[a], nodes[b]) });
+    adj[a].push(id); adj[b].push(id);
+  }
+  const ends = new Set();
+  ROUTE.forEach(seg => {
+    if(seg.length < 2) return;
+    let prev = nodeFor(seg[0]); ends.add(prev);
+    for(let i = 1; i < seg.length; i++){ const cur = nodeFor(seg[i]); addEdge(prev, cur); prev = cur; }
+    ends.add(prev);
+  });
+  const endList = Array.from(ends);
+  for(let i = 0; i < endList.length; i++){
+    for(let j = i+1; j < endList.length; j++){
+      if(hav(nodes[endList[i]], nodes[endList[j]]) <= BRIDGE_M) addEdge(endList[i], endList[j]);
+    }
+  }
+
+  const projCache = new Map();
+  function projFor(zoom, project){
+    let c = projCache.get(zoom);
+    if(!c){
+      if(projCache.size > 6) projCache.clear();
+      c = { x: new Float64Array(nodes.length), y: new Float64Array(nodes.length) };
+      for(let i = 0; i < nodes.length; i++){ const p = project(nodes[i][0], nodes[i][1], zoom); c.x[i] = p[0]; c.y[i] = p[1]; }
+      projCache.set(zoom, c);
+    }
+    return c;
+  }
+  // Ponto do traçado mais proximo de (px,py) (pixeis ao zoom dado). maxPx opcional.
+  function snap(px, py, zoom, project, maxPx){
+    const c = projFor(zoom, project);
+    let bestD2 = Infinity, bestE = -1, bestT = 0;
+    for(let e = 0; e < edges.length; e++){
+      const ed = edges[e], ax = c.x[ed.a], ay = c.y[ed.a], dx = c.x[ed.b]-ax, dy = c.y[ed.b]-ay;
+      const l2 = dx*dx + dy*dy;
+      let t = l2 ? ((px-ax)*dx + (py-ay)*dy)/l2 : 0;
+      t = t < 0 ? 0 : (t > 1 ? 1 : t);
+      const cx = ax + t*dx - px, cy = ay + t*dy - py, d2 = cx*cx + cy*cy;
+      if(d2 < bestD2){ bestD2 = d2; bestE = e; bestT = t; }
+    }
+    if(bestE < 0 || (maxPx != null && bestD2 > maxPx*maxPx)) return null;
+    const ed = edges[bestE], A = nodes[ed.a], B = nodes[ed.b];
+    return { edge: bestE, t: bestT, pos: [A[0] + bestT*(B[0]-A[0]), A[1] + bestT*(B[1]-A[1])] };
+  }
+  // Heap binario minimo (lazy deletion).
+  function Heap(){ this.d = []; this.n = []; }
+  Heap.prototype.push = function(dist, node){
+    const d = this.d, n = this.n; let i = d.length; d.push(dist); n.push(node);
+    while(i > 0){ const p = (i-1) >> 1; if(d[p] <= d[i]) break; [d[p], d[i]] = [d[i], d[p]]; [n[p], n[i]] = [n[i], n[p]]; i = p; }
+  };
+  Heap.prototype.pop = function(){
+    const d = this.d, n = this.n, rd = d[0], rn = n[0], ld = d.pop(), ln = n.pop();
+    if(d.length){
+      d[0] = ld; n[0] = ln; let i = 0;
+      for(;;){
+        const l = 2*i+1, r = l+1; let m = i;
+        if(l < d.length && d[l] < d[m]) m = l;
+        if(r < d.length && d[r] < d[m]) m = r;
+        if(m === i) break;
+        [d[m], d[i]] = [d[i], d[m]]; [n[m], n[i]] = [n[i], n[m]]; i = m;
+      }
+    }
+    return [rd, rn];
+  };
+  // Arvore de distancias minimas a partir de um ponto do traçado.
+  function tree(from){
+    const N = nodes.length, dist = new Float64Array(N).fill(Infinity), prev = new Int32Array(N).fill(-1);
+    const h = new Heap(), ed = edges[from.edge];
+    dist[ed.a] = from.t * ed.len; dist[ed.b] = (1 - from.t) * ed.len;
+    h.push(dist[ed.a], ed.a); h.push(dist[ed.b], ed.b);
+    while(h.d.length){
+      const [d, u] = h.pop();
+      if(d > dist[u]) continue;
+      const list = adj[u];
+      for(let k = 0; k < list.length; k++){
+        const e = edges[list[k]], v = e.a === u ? e.b : e.a, nd = d + e.len;
+        if(nd < dist[v]){ dist[v] = nd; prev[v] = u; h.push(nd, v); }
+      }
+    }
+    return { from, dist, prev };
+  }
+  // Distancia (m) e caminho [[lat,lon],...] entre a origem da arvore e o ponto `to`.
+  function query(tr, to){
+    const f = tr.from, ed = edges[to.edge];
+    let best = Infinity, mode = null;
+    if(f.edge === to.edge){ best = Math.abs(f.t - to.t) * ed.len; mode = 'same'; }
+    const viaA = tr.dist[ed.a] + to.t * ed.len, viaB = tr.dist[ed.b] + (1 - to.t) * ed.len;
+    if(viaA < best){ best = viaA; mode = 'a'; }
+    if(viaB < best){ best = viaB; mode = 'b'; }
+    if(!isFinite(best)) return null;
+    if(mode === 'same') return { meters: best, path: [f.pos, to.pos] };
+    let n = mode === 'a' ? ed.a : ed.b;
+    const rev = [to.pos, nodes[n]];
+    while(tr.prev[n] !== -1){ n = tr.prev[n]; rev.push(nodes[n]); }
+    rev.push(f.pos);
+    return { meters: best, path: rev.reverse() };
+  }
+  return { snap, tree, query, nodeCount: () => nodes.length, edgeCount: () => edges.length };
+})();
+// </route-graph>
+
+const Measure = (function(){
+  const MAX_SNAP_PX = 32;
+  const btn = document.getElementById('measureBtn'), panel = document.getElementById('measurePanel');
+  const hintEl = document.getElementById('mpHint'), legsEl = document.getElementById('mpLegs');
+  const totalBox = document.getElementById('mpTotal'), totalKmEl = document.getElementById('mpTotalKm'), totalMEl = document.getElementById('mpTotalM');
+  const undoBtn = document.getElementById('mpUndo'), clearBtn = document.getElementById('mpClear');
+  const layer = L.layerGroup();
+  const project = (lat, lon, z) => { const p = map.project([lat, lon], z); return [p.x, p.y]; };
+  const HINT_START = 'Clica no traçado (ou num ponto) para marcar o início. A distância segue o traçado do nivelamento.';
+  const HINT_NEXT = 'Clica para adicionar mais pontos (troços seguidos).';
+
+  let active = false, pts = [], legs = [], total = 0, tree = null, hintTimer = null;
+  let ghost = null, previewLine = null, rafPending = null;
+
+  const groupInt = s => String(s).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+  function fmtShort(m){ return m < 1000 ? Math.round(m) + ' m' : (m/1000).toFixed(2).replace('.', ',') + ' km'; }
+  function pinLabel(i){ return i < 26 ? String.fromCharCode(65 + i) : String(i + 1); }
+  function setHint(text, warn){
+    hintEl.textContent = text; hintEl.classList.toggle('warn', !!warn);
+    clearTimeout(hintTimer);
+    if(warn) hintTimer = setTimeout(() => setHint(pts.length ? HINT_NEXT : HINT_START), 3500);
+  }
+
+  function snapAt(latlng, maxPx){
+    const z = map.getZoom(), p = map.project(latlng, z);
+    return RouteGraph.snap(p.x, p.y, z, project, maxPx);
+  }
+  function addSnapped(sn){
+    let leg = null;
+    if(tree){
+      leg = RouteGraph.query(tree, sn);
+      if(!leg){ setHint('Não há ligação pelo traçado entre estes dois pontos.', true); return; }
+    }
+    const idx = pts.length;
+    const marker = L.marker(sn.pos, {
+      icon: L.divIcon({ className:'', html:'<div class="msr-pin' + (idx === 0 ? ' first' : '') + '">' + pinLabel(idx) + '</div>', iconSize:[24,24], iconAnchor:[12,12] }),
+      interactive:false, keyboard:false, zIndexOffset:2000
+    }).addTo(layer);
+    let line = null, casing = null;
+    if(leg){
+      total += leg.meters;
+      casing = L.polyline(leg.path, { color:'#fff', weight:10, opacity:.9, lineCap:'round', lineJoin:'round', interactive:false }).addTo(layer);
+      line = L.polyline(leg.path, { color:'#1971C2', weight:6, opacity:1, lineCap:'round', lineJoin:'round', interactive:false }).addTo(layer);
+    }
+    marker.bindTooltip(idx === 0 ? 'Início' : fmtShort(total), { permanent:true, direction:'top', offset:[0,-13], className:'msr-tip', interactive:false });
+    pts.push({ sn, marker, line, casing });
+    if(leg) legs.push(leg);
+    tree = RouteGraph.tree(sn);
+    render();
+  }
+  function addPoint(latlng){
+    if(!active) return;
+    const sn = snapAt(latlng, MAX_SNAP_PX);
+    if(!sn){ setHint('Clica mais perto do traçado (linha vermelha).', true); return; }
+    addSnapped(sn);
+  }
+  // Ponto vindo de um marcador (encaixa sempre no ponto do traçado mais proximo).
+  function addPointFromMarker(latlng){
+    if(!active) return;
+    const sn = snapAt(latlng, null);
+    if(sn) addSnapped(sn);
+  }
+  function undo(){
+    if(!pts.length) return;
+    const last = pts.pop();
+    last.marker.unbindTooltip(); layer.removeLayer(last.marker);
+    if(last.line){
+      layer.removeLayer(last.casing); layer.removeLayer(last.line);
+      total -= legs.pop().meters;
+    }
+    if(!pts.length){ total = 0; tree = null; } else { tree = RouteGraph.tree(pts[pts.length-1].sn); }
+    hidePreview(); render();
+  }
+  function clear(){
+    pts.forEach(p => p.marker.unbindTooltip());
+    layer.clearLayers(); pts = []; legs = []; total = 0; tree = null;
+    hidePreview(); render();
+  }
+  function render(){
+    legsEl.innerHTML = legs.map((lg, i) =>
+      '<li><span class="lg">' + pinLabel(i) + ' &rarr; ' + pinLabel(i+1) + '</span><span class="lv">' + groupInt(Math.round(lg.meters)) + ' m</span></li>').join('');
+    const many = pts.length >= 2;
+    panel.classList.toggle('one-leg', legs.length === 1); panel.classList.toggle('has-total', many);
+    totalBox.classList.toggle('show', many);
+    if(many){ totalKmEl.textContent = fmtShort(total); totalMEl.textContent = groupInt(Math.round(total)) + ' m'; }
+    undoBtn.disabled = !pts.length; clearBtn.disabled = !pts.length;
+    setHint(pts.length ? HINT_NEXT : HINT_START);
+  }
+
+  // ---- pre-visualizacao enquanto o rato se move (ponto encaixado + troço) ----
+  function hidePreview(){
+    if(ghost){ ghost.unbindTooltip(); ghost.remove(); ghost = null; }
+    if(previewLine){ previewLine.remove(); previewLine = null; }
+  }
+  function onMove(e){
+    if(!active || rafPending) return;
+    const ll = e.latlng;
+    rafPending = requestAnimationFrame(() => {
+      rafPending = null;
+      if(!active) return;
+      const sn = snapAt(ll, MAX_SNAP_PX);
+      if(!sn){ hidePreview(); return; }
+      if(!ghost){
+        ghost = L.marker(sn.pos, { icon: L.divIcon({ className:'', html:'<div class="msr-ghost"></div>', iconSize:[14,14], iconAnchor:[7,7] }), interactive:false, keyboard:false, zIndexOffset:1500 });
+        ghost.bindTooltip('', { permanent:true, direction:'right', offset:[10,0], className:'msr-tip', interactive:false });
+      }
+      ghost.setLatLng(sn.pos); if(!map.hasLayer(ghost)) ghost.addTo(map);
+      let txt = 'Marcar início';
+      if(tree){
+        const r = RouteGraph.query(tree, sn);
+        if(r){
+          txt = '+' + fmtShort(r.meters) + ' \u00B7 ' + fmtShort(total + r.meters);
+          if(!previewLine) previewLine = L.polyline(r.path, { color:'#1971C2', weight:4, opacity:.9, dashArray:'6,8', interactive:false });
+          else previewLine.setLatLngs(r.path);
+          if(!map.hasLayer(previewLine)) previewLine.addTo(map);
+        } else { txt = 'sem ligação'; if(previewLine) previewLine.remove(); }
+      }
+      ghost.setTooltipContent(txt);
+    });
+  }
+
+  function setActive(on){
+    active = on;
+    btn.classList.toggle('active', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    panel.classList.toggle('open', on);
+    map.getContainer().classList.toggle('measuring', on);
+    if(on){
+      layer.addTo(map); map.doubleClickZoom.disable(); render();
+    } else {
+      hidePreview(); clear(); map.removeLayer(layer); map.doubleClickZoom.enable();
+    }
+  }
+  btn.addEventListener('click', () => setActive(!active));
+  document.getElementById('mpClose').addEventListener('click', () => setActive(false));
+  undoBtn.addEventListener('click', undo);
+  clearBtn.addEventListener('click', clear);
+  document.addEventListener('keydown', e => { if(active && e.key === 'Escape' && !lightboxOverlay.classList.contains('open')) setActive(false); });
+  map.on('click', e => addPoint(e.latlng));
+  map.on('mousemove', onMove);
+  map.on('mouseout', hidePreview);
+  return { isActive: () => active, addPoint: addPointFromMarker };
+})();
 
 // ---------------- Init ----------------
 document.getElementById('statTotal').textContent = POINTS.length;
