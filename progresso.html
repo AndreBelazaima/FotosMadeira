@@ -97,7 +97,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 21/09/2026 11:24</div>
+  <div class="updated">Atualizado em 21/09/2026 11:30</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -463,6 +463,7 @@ function renderLineCard(lineName){
   const mk = (label,val,color)=>`<div style="background:var(--paper); border-radius:8px; padding:9px 12px;"><div style="font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); font-weight:600;">${label}</div><div class="mono" style="font-size:16px; font-weight:600; ${color?`color:${color};`:''}">${val}</div></div>`;
   grid.innerHTML =
     mk('Estado', l.estado.startsWith('Conclu')?l.estado:`<span class="badge live">${l.estado}</span>`) +
+    mk('Comprimento (so nivelamento)', fmt(l.comprimento_galileo_main,1)+' m') +
     mk('EF / Toll (mm)', fmt(l.ef,2)+' / '+fmt(l.toll,2)) +
     mk('Resultado', badge(l.resultado)) +
     mk('Rendimento', fmt(l.rendimento,0)+' m/h') +
