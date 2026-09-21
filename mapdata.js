@@ -1,7 +1,7 @@
 // Dados do mapa (pontos, tracado e posicao da equipa). Ficheiro separado do index.html
 // para o robo de atualizacao so mexer aqui (LS15_POS) e nunca no codigo da pagina.
 const POINTS =[
-{n:"0+000",lat:32.644786,lon:-16.910749,e:0,img:"",mE:null,pN:null},
+{n:"0+000",lat:32.644786,lon:-16.910749,e:0,img:"https://andrebelazaima.github.io/FotosMadeira/0ENQ.jpeg",mE:null,pN:null},
 {n:"NP07",lat:32.743139,lon:-16.700595,e:127.55,img:"https://andrebelazaima.github.io/FotosMadeira/NP07ENQ.jpeg",mE:340669.02,pN:3624091},
 {n:"T28",lat:32.743386,lon:-16.70115,e:122.31,img:"https://andrebelazaima.github.io/FotosMadeira/T28ENQ.jpeg",mE:340617.39,pN:3624119.24},
 {n:"T27",lat:32.742759,lon:-16.701687,e:123.28,img:"https://andrebelazaima.github.io/FotosMadeira/T27ENQ.jpeg",mE:340565.99,pN:3624050.54},
