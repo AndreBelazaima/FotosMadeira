@@ -566,7 +566,7 @@
           <input type="checkbox" id="linhasToggle" checked>
           Estado das linhas
         </label>
-        <div class="ls-legend" aria-hidden="true"><span><i style="background:#2F9E44"></i>Aprovada</span><span><i style="background:#E03131"></i>Reprovada</span><span><i style="background:#F59F00"></i>Em curso</span></div>
+        <div class="ls-legend" aria-hidden="true"><span><i style="background:#2F9E44"></i>Aprovada</span><span><i style="background:#E03131"></i>Reprovada (Galileo)</span><span><i style="background:#F59F00"></i>Em curso</span></div>
         <div class="stale-note" id="staleNote" role="status"></div>
         <button type="button" class="measure-btn" id="measureBtn" aria-pressed="false" title="Medir a distância entre pontos, seguindo o traçado do nivelamento">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0L2.7 16.7a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4z"/><path d="m7.5 10.5 2 2M10.5 7.5l2 2M13.5 4.5l2 2M4.5 13.5l2 2"/></svg>
@@ -1754,12 +1754,12 @@ const Linhas = (function(){
   const res = ok => ok ? '<span style="color:#2B8A3E;font-weight:600">Aprovado</span>' : '<span style="color:#C92A2A;font-weight:600">Reprovado</span>';
   function statusOf(l){
     if(!l.concluida) return 'curso';
-    return (l.aprov_tec && l.aprov_galileo) ? 'aprovada' : 'reprovada';
+    return l.aprov_galileo ? 'aprovada' : 'reprovada';   // a cor segue o criterio da Galileo; o Crit.2 fica no popup
   }
   function labelOf(l, st){
     if(st === 'curso') return 'Em curso';
     if(st === 'aprovada') return 'Concluída \u00B7 aprovada';
-    return 'Reprovada (' + (!l.aprov_tec ? 'Crit.2' : 'Galileo') + ')';
+    return 'Reprovada (Galileo)';
   }
   function fmtTime(iso){
     if(!iso) return '\u2014';
@@ -1777,6 +1777,7 @@ const Linhas = (function(){
         <div class="row"><dt>Resultado (Galileo)</dt><dd>${res(l.aprov_galileo)}</dd></div>
         <div class="row"><dt>Tol. técnica (mm)</dt><dd>${num(l.tol_tecnica, 2)}</dd></div>
         <div class="row"><dt>Resultado (Crit.2)</dt><dd>${res(l.aprov_tec)}</dd></div>
+        ${l.aprov_tec ? '' : '<div class="row"><dt style="color:#C92A2A;font-weight:600">Reprova no Crit.2</dt><dd style="color:#C92A2A">EF &gt; tol. técnica</dd></div>'}
         <div class="row"><dt>Rendimento</dt><dd>${num(l.rendimento, 0)} m/h</dd></div>
         <div class="row"><dt>Estações</dt><dd>${l.estacoes}</dd></div>
         <div class="row"><dt>Início \u2192 fim</dt><dd>${fmtTime(l.inicio)} \u2192 ${fmtTime(l.fim)}</dd></div>
