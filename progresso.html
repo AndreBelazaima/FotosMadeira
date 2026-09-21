@@ -97,7 +97,7 @@
 </header>
 
 <div class="page">
-  <div class="updated">Atualizado em 21/09/2026 11:30</div>
+  <div class="updated">Atualizado em 21/09/2026 11:35</div>
 
   <div class="kpis" id="kpis"></div>
 
@@ -466,6 +466,8 @@ function renderLineCard(lineName){
     mk('Comprimento (so nivelamento)', fmt(l.comprimento_galileo_main,1)+' m') +
     mk('EF / Toll (mm)', fmt(l.ef,2)+' / '+fmt(l.toll,2)) +
     mk('Resultado', badge(l.resultado)) +
+    mk('Tol. tecnica (mm)', fmt(l.tol_tecnica,2)) +
+    mk('Resultado tecnico', badge(l.resultado_tecnico)) +
     mk('Rendimento', fmt(l.rendimento,0)+' m/h') +
     mk('Tempo/estacao', fmt(l.tempo_medio_min,1)+' min') +
     mk('Taxa repeticao', fmt(l.taxa_rep*100,1)+'%') +
