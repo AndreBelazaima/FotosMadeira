@@ -261,6 +261,9 @@
   .profile-chart .pf-measure-band{fill:rgba(25,113,194,.18); pointer-events:none;}
   .profile-chart .pf-measure-guide{stroke:#1971C2; stroke-width:1.5; stroke-dasharray:3,2; pointer-events:none;}
   .profile-chart .pf-measure-label{font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:700; fill:#1971C2; pointer-events:none;}
+  .profile-chart .pf-seg{fill:none; stroke-width:3.6; stroke-linecap:butt; stroke-linejoin:round; pointer-events:none;}
+  .profile-chart .pf-seg-hit{fill:none; stroke:transparent; stroke-width:12; cursor:pointer;}
+  .profile-chart .pf-segg:hover .pf-seg{stroke-width:5.6;}
   @media (max-width:860px){
     .measure-panel{top:auto; bottom:60px; left:12px; right:62px; width:auto; max-width:none; max-height:44%; padding:8px 12px 10px;}
     .mp-head{margin-bottom:4px;}
@@ -1132,10 +1135,22 @@ profileChartEl.addEventListener('mousemove', e => {
   const tooltip = document.getElementById('pfTooltip');
   if(!tooltip) return;
   const t = e.target;
+  const segG = (t.closest && t.classList && !t.classList.contains('pf-pt-hit')) ? t.closest('.pf-segg') : null;
+  if(segG){
+    const r = profileChartEl.getBoundingClientRect();
+    tooltip.style.left = (e.clientX - r.left) + 'px';
+    tooltip.style.top = (e.clientY - r.top) + 'px';
+    tooltip.textContent = Linhas.tooltipText(segG.dataset.linha);
+    tooltip.style.display = 'block';
+    return;
+  }
   if(!t.classList || !t.classList.contains('pf-pt-hit')){ tooltip.style.display = 'none'; return; }
   tooltip.style.left = t.getAttribute('cx') + 'px';
   tooltip.style.top = t.getAttribute('cy') + 'px';
-  tooltip.textContent = `${t.dataset.name} · ${t.dataset.e} m`;
+  let lineInfo = '';
+  const pd = PROFILE.find(q => q.n === t.dataset.name);
+  if(pd){ const sg = profileLineSegs.find(g => pd.dist >= g.dA && pd.dist <= g.dB); if(sg) lineInfo = ' \u00B7 ' + Linhas.tooltipText(sg.linha); }
+  tooltip.textContent = `${t.dataset.name} \u00B7 ${t.dataset.e} m${lineInfo}`;
   tooltip.style.display = 'block';
 });
 profileChartEl.addEventListener('mouseleave', () => {
@@ -1144,9 +1159,21 @@ profileChartEl.addEventListener('mouseleave', () => {
 });
 
 var measureProfileMarks = [];   // [{dist,label}] - pontos medidos (ferramenta Medir distancia)
+var profileLineSegs = [];       // [{linha,color,dA,dB}] - troços das linhas no perfil (estado das linhas)
 const PF_PAD = { l:44, r:14, t:12, b:22 };
 let zoomRange = null; // {min,max} em metros de distancia, ou null = vista completa
 let pfDragStart = null;
+
+// Cota interpolada ao longo do perfil na distancia d (m).
+function pfElevAt(d){
+  for(let i = 1; i < PROFILE.length; i++){
+    if(d <= PROFILE[i].dist){
+      const a = PROFILE[i-1], b = PROFILE[i], t = (b.dist - a.dist) ? (d - a.dist) / (b.dist - a.dist) : 0;
+      return a.e + t * (b.e - a.e);
+    }
+  }
+  return PROFILE[PROFILE.length-1].e;
+}
 
 function pfFullExtent(){ return [0, PROFILE[PROFILE.length-1].dist]; }
 function pfCurrentDomain(){ return zoomRange ? [zoomRange.min, zoomRange.max] : pfFullExtent(); }
@@ -1230,6 +1257,17 @@ function renderProfile(){
     <text class="pf-ls15-label" x="${lx}" y="${ltY}" text-anchor="middle">Equipa</text>`;
   }
 
+  let segSvg = '';
+  profileLineSegs.forEach(sg => {
+    const d0 = Math.max(sg.dA, minDist), d1 = Math.min(sg.dB, maxDist);
+    if(d1 <= d0) return;
+    const pts = [[d0, pfElevAt(d0)]];
+    PROFILE.forEach(p => { if(p.dist > d0 && p.dist < d1) pts.push([p.dist, p.e]); });
+    pts.push([d1, pfElevAt(d1)]);
+    const dPath = pts.map((q, i) => `${i===0?'M':'L'}${x(q[0]).toFixed(1)},${y(q[1]).toFixed(1)}`).join(' ');
+    segSvg += `<g class="pf-segg" data-linha="${sg.linha}"><path class="pf-seg" d="${dPath}" stroke="${sg.color}"/><path class="pf-seg-hit" d="${dPath}"/></g>`;
+  });
+
   let measureSvg = '';
   if(measureProfileMarks.length){
     const M = measureProfileMarks;
@@ -1255,12 +1293,20 @@ function renderProfile(){
     ${guide}
     <path class="pf-area" d="${areaPath}"/>
     <path class="pf-line" d="${linePath}"/>
+    ${segSvg}
     ${dots}
     ${measureSvg}
     ${ls15MarkerSvg}
     ${xLabels}
   </svg><div class="pf-tooltip" id="pfTooltip"></div>`;
 
+  profileChartEl.querySelectorAll('.pf-segg').forEach(g => {
+    g.addEventListener('mousedown', e => { g._downX = e.clientX; });
+    g.addEventListener('click', e => {
+      if(Math.abs(e.clientX - (g._downX == null ? e.clientX : g._downX)) > 4) return;   // foi um arrastar (zoom), nao um clique
+      if(!Measure.isActive()) Linhas.open(g.dataset.linha);
+    });
+  });
   profileChartEl.querySelectorAll('.pf-pt-hit').forEach(el => {
     el.addEventListener('click', () => selectPoint(el.dataset.name, true));
   });
@@ -1749,6 +1795,7 @@ const Linhas = (function(){
   const toggle = document.getElementById('linhasToggle'), staleNote = document.getElementById('staleNote');
   const STALE_MIN = 30;
   let data = null;
+  const polys = {}, byName = {};
 
   const num = (v, d) => (v == null || isNaN(v)) ? '\u2014' : Number(v).toFixed(d).replace('.', ',');
   const res = ok => ok ? '<span style="color:#2B8A3E;font-weight:600">Aprovado</span>' : '<span style="color:#C92A2A;font-weight:600">Reprovado</span>';
@@ -1805,14 +1852,63 @@ const Linhas = (function(){
     return out;
   }
 
+  // Ponto do caminho principal a m metros do inicio.
+  function pointAt(m){
+    const mp = RouteGraph.mainPath(), pts = mp.pts, cum = mp.cum;
+    m = Math.max(0, Math.min(cum[cum.length-1], m));
+    let lo = 0, hi = cum.length - 1;
+    while(lo < hi){ const mid = (lo + hi + 1) >> 1; if(cum[mid] <= m) lo = mid; else hi = mid - 1; }
+    if(lo >= pts.length - 1) return pts[pts.length-1];
+    const f = (m - cum[lo]) / ((cum[lo+1] - cum[lo]) || 1);
+    return [pts[lo][0] + f*(pts[lo+1][0]-pts[lo][0]), pts[lo][1] + f*(pts[lo+1][1]-pts[lo][1])];
+  }
+  // Distancia no eixo do perfil longitudinal correspondente a m metros do tracado.
+  function profDist(m){
+    const p = pointAt(m), pp = projectDistanceAlongProfile(p[0], p[1]);
+    return pp ? pp.dist : null;
+  }
+  // Troços coloridos da linha do perfil (mesmas cores e estados do mapa).
+  function buildProfileSegs(){
+    profileLineSegs = [];
+    if(data && toggle.checked){
+      let run = 0;
+      data.linhas.filter(l => l.b - l.a >= 1).sort((p, q) => p.a - q.a).forEach(l => {
+        const d0 = profDist(l.a), d1 = profDist(l.b);
+        if(d0 == null || d1 == null) return;
+        const dA = Math.max(d0, run), dB = Math.max(d1, dA);
+        run = dB;
+        if(dB - dA > 0.5) profileLineSegs.push({ linha:l.linha, color:COLORS[statusOf(l)], dA, dB });
+      });
+    }
+    if(!profilePanel.classList.contains('collapsed')) renderProfile();
+  }
+  function tooltipText(name){
+    const l = byName[name];
+    if(!l) return name;
+    return l.linha + ' \u00B7 ' + labelOf(l, statusOf(l)) + (l.aprov_tec ? '' : ' \u00B7 reprova Crit.2');
+  }
+  // Salta para o troço da linha no mapa e abre o respetivo popup.
+  function open(name){
+    const pl = polys[name], l = byName[name];
+    if(!pl || !l) return;
+    if(!map.hasLayer(layer)){ toggle.checked = true; layer.addTo(map); }
+    const seg = sliceMain(l.a, l.b);
+    if(!seg) return;
+    map.fitBounds(L.latLngBounds(seg), { padding:[60, 60], maxZoom:17, animate:false });
+    const mid = seg[Math.floor(seg.length / 2)];
+    pl.openPopup(L.latLng(mid[0], mid[1]));
+  }
+
   function build(){
     layer.clearLayers();
+    Object.keys(polys).forEach(k => { delete polys[k]; });
     data.linhas.forEach(l => {
       const seg = sliceMain(l.a, l.b);
       if(!seg) return;
       const st = statusOf(l);
       L.polyline(seg, { color:'#fff', weight:10, opacity:.85, lineCap:'butt', lineJoin:'round', interactive:false }).addTo(layer);
       const pl = L.polyline(seg, { color:COLORS[st], weight:6, opacity:.97, lineCap:'butt', lineJoin:'round' }).addTo(layer);
+      polys[l.linha] = pl; byName[l.linha] = l;
       pl.bindPopup(popupLinha(l, st), { className:'geoide-popup', maxWidth:320, minWidth:296 });
       pl.bindTooltip(l.linha + ' \u00B7 ' + labelOf(l, st), { sticky:true, direction:'top', className:'msr-tip' });
       pl.on('mouseover', () => pl.setStyle({ weight:8 }));
@@ -1820,6 +1916,7 @@ const Linhas = (function(){
       pl.on('click', () => { if(Measure.isActive()) pl.closePopup(); });
     });
     if(toggle.checked && !map.hasLayer(layer)) layer.addTo(map);
+    buildProfileSegs();
   }
 
   function updateStale(){
@@ -1844,11 +1941,12 @@ const Linhas = (function(){
 
   toggle.addEventListener('change', e => {
     if(e.target.checked){ if(data) layer.addTo(map); } else map.removeLayer(layer);
+    buildProfileSegs();
   });
   load();
   setInterval(load, 5 * 60 * 1000);
   setInterval(updateStale, 60 * 1000);
-  return { statusOf, sliceMain };
+  return { statusOf, sliceMain, open, tooltipText };
 })();
 
 // ---------------- Init ----------------
