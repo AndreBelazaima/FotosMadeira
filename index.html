@@ -716,15 +716,15 @@ const derivLayer = L.layerGroup();
 (function buildDerivacoes(){
   const label = document.getElementById('derivLabel');
   if(typeof DERIVACOES === 'undefined' || !DERIVACOES.linhas || !DERIVACOES.linhas.length){ if(label) label.hidden = true; return; }
-  const w = DERIVACOES.largura || 3, cor = '#1E90FF';   // azul (a cor do KMZ era laranja)
+  const cor = '#1E90FF';   // azul (a cor do KMZ era laranja)
   DERIVACOES.linhas.forEach(seg => {
     let m = 0;
     for(let i = 1; i < seg.length; i++) m += haversine(seg[i-1][0], seg[i-1][1], seg[i][0], seg[i][1]);
-    L.polyline(seg, { color:'#fff', weight:w + 4, opacity:.85, lineCap:'round', lineJoin:'round', interactive:false }).addTo(derivLayer);
-    const pl = L.polyline(seg, { color:cor, weight:w + 1, opacity:.95, lineCap:'round', lineJoin:'round' }).addTo(derivLayer);
+    // Mesmo estilo do traçado do nivelamento (pontilhado, largura 5), mas a azul.
+    L.polyline(seg, { color:cor, weight:5, opacity:.85, dashArray:'1,7', lineCap:'round', interactive:false }).addTo(derivLayer);
+    // Linha invisivel e mais larga so para o rato apanhar o tooltip (o pontilhado e fino).
+    const pl = L.polyline(seg, { color:cor, weight:14, opacity:0, lineCap:'round' }).addTo(derivLayer);
     pl.bindTooltip('Deriva\u00e7\u00e3o \u00B7 ' + (m < 1000 ? Math.round(m) + ' m' : (m/1000).toFixed(2).replace('.', ',') + ' km'), { sticky:true, direction:'top', className:'msr-tip' });
-    pl.on('mouseover', () => pl.setStyle({ weight:w + 3 }));
-    pl.on('mouseout', () => pl.setStyle({ weight:w + 1 }));
   });
   derivLayer.addTo(map);
 })();
