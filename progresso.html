@@ -57,6 +57,15 @@
   .chart-card svg{display:block; width:100%; height:auto;}
   .bar-label{font-size:10.5px; fill:var(--ink-soft); font-family:'IBM Plex Sans';}
   .bar-value{font-size:10.5px; fill:var(--ink); font-family:'IBM Plex Mono'; font-weight:600;}
+  .bar-track{fill:var(--paper);}
+  .bar{transition:filter .15s ease; animation:barGrow .55s cubic-bezier(.16,1,.3,1) both; transform-box:fill-box; transform-origin:left center;}
+  .bar:hover{filter:brightness(1.12);}
+  @keyframes barGrow{from{transform:scaleX(0);} to{transform:scaleX(1);}}
+  @media (prefers-reduced-motion:reduce){ .bar{animation:none;} }
+  .chart-tooltip{position:fixed; display:none; z-index:1000; background:var(--ink); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; padding:4px 9px; border-radius:6px; pointer-events:none; box-shadow:0 4px 14px rgba(34,37,42,.28); white-space:nowrap;}
+  .chart-legend{display:flex; gap:14px; flex-wrap:wrap; font-size:10.5px; color:var(--ink-soft); padding:2px 2px 0; align-items:center;}
+  .chart-legend i{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:-1px;}
+  .chart-legend .ref{display:inline-block; width:11px; height:0; border-top:2px dashed var(--bad); margin-right:4px; vertical-align:3px;}
 
   .table-wrap{overflow-x:auto;}
   table{width:100%; border-collapse:collapse; font-size:13px;}
@@ -99,7 +108,7 @@
 </header>
 
 <div class="page">
-  <div class="updated" id="updated" data-iso="2026-09-22T14:45:16+01:00">Atualizado em 22/09/2026 14:45 <span id="updated-age"></span></div>
+  <div class="updated" id="updated" data-iso="2026-09-22T14:51:14+01:00">Atualizado em 22/09/2026 14:51 <span id="updated-age"></span></div>
   <div class="stale-banner" id="stale-banner" hidden></div>
 
   <div class="kpis" id="kpis"></div>
@@ -107,7 +116,7 @@
   <div class="card">
     <h3>Progresso por linha</h3>
     <div class="charts" style="padding:16px 18px 0;">
-      <div class="chart-card"><h3 style="padding:0 0 10px; border:none;">Erro de fecho vs Tolerancia (mm)</h3><svg id="chart-ef" viewBox="0 0 540 240"></svg><p id="chart-ef-note" style="font-size:11.5px; color:var(--ink-soft); margin:6px 0 0;"></p></div>
+      <div class="chart-card"><h3 style="padding:0 0 10px; border:none;">Erro de fecho vs Tolerancia (mm)</h3><svg id="chart-ef" viewBox="0 0 540 240"></svg><div class="chart-legend"><span><i style="background:var(--good)"></i>Aprovado</span><span><i style="background:var(--bad)"></i>Reprovado</span><span><b class="ref"></b>Tolerancia</span></div><p id="chart-ef-note" style="font-size:11.5px; color:var(--ink-soft); margin:6px 0 0;"></p></div>
       <div class="chart-card"><h3 style="padding:0 0 10px; border:none;">Rendimento por linha (m/h)</h3><svg id="chart-rend" viewBox="0 0 540 240"></svg><p id="chart-rend-note" style="font-size:11.5px; color:var(--ink-soft); margin:6px 0 0;"></p></div>
     </div>
     <div class="chart-card" style="padding:16px 18px;" hidden>
@@ -227,6 +236,25 @@ function badge(text){ const ok = text==='Aprovado'; return `<span class="badge $
 })();
 
 const BAR_PX = 11; // grossura das barras (px reais), igual em todos os graficos
+
+// Tooltip partilhado por todos os graficos de barras (um so elemento, reutilizado).
+function chartTooltipEl(){
+  let el = document.getElementById('chartTooltip');
+  if(!el){ el = document.createElement('div'); el.id = 'chartTooltip'; el.className = 'chart-tooltip'; document.body.appendChild(el); }
+  return el;
+}
+function attachBarHover(svg){
+  const tip = chartTooltipEl();
+  svg.addEventListener('mousemove', e=>{
+    const r = e.target.closest && e.target.closest('rect[data-tip]');
+    if(!r){ tip.style.display = 'none'; return; }
+    tip.textContent = r.getAttribute('data-tip');
+    tip.style.left = (e.clientX+12)+'px'; tip.style.top = (e.clientY+12)+'px';
+    tip.style.display = 'block';
+  });
+  svg.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+}
+
 function drawBarChart(svgId, items){
   const svg = document.getElementById(svgId);
   // O viewBox usa a largura real do container (nao um valor fixo) para que 1
@@ -235,6 +263,7 @@ function drawBarChart(svgId, items){
   const W = svg.getBoundingClientRect().width || 540;
   const padL=90, padR=50, padT=8, padB=8;
   const rowH = BAR_PX + 9;
+  const barH = rowH-9, barR = barH/2;
   const maxV = Math.max(...items.map(i=>i.value), 1) * 1.15;
   const scale = (W-padL-padR)/maxV;
   const svgH = items.length*rowH + padT + padB;
@@ -244,7 +273,8 @@ function drawBarChart(svgId, items){
     const y = padT + idx*rowH;
     const barW = Math.max(it.value*scale, 1);
     out += `<text x="${padL-8}" y="${y+rowH/2+4}" text-anchor="end" class="bar-label">${it.label}</text>`;
-    out += `<rect x="${padL}" y="${y+4}" width="${barW}" height="${rowH-9}" rx="3" fill="${it.color}"></rect>`;
+    out += `<rect class="bar-track" x="${padL}" y="${y+4}" width="${W-padL-padR}" height="${barH}" rx="${barR}"></rect>`;
+    out += `<rect class="bar" data-tip="${it.label}: ${it.text}" x="${padL}" y="${y+4}" width="${barW}" height="${barH}" rx="${barR}" fill="${it.color}" style="animation-delay:${idx*35}ms"></rect>`;
     out += `<text x="${padL+barW+6}" y="${y+rowH/2+4}" class="bar-value">${it.text}</text>`;
     if(it.mid!==undefined){
       const midStr = String(it.mid);
@@ -260,6 +290,7 @@ function drawBarChart(svgId, items){
     }
   });
   svg.innerHTML = out;
+  attachBarHover(svg);
 }
 const TOP_N = 6;
 function topN(list, keyFn, n){ return list.slice().sort((a,b)=>keyFn(b)-keyFn(a)).slice(0,n); }
@@ -276,10 +307,11 @@ function drawPairedBarChart(svgId, items, colorA, colorB){
   const svg = document.getElementById(svgId);
   const W = svg.getBoundingClientRect().width || 860;
   const padL=90, padR=50, padT=10, padB=10;
-  const barH = BAR_PX; // mesma grossura (px reais) das barras de drawBarChart
+  const barH = BAR_PX, barR = barH/2; // mesma grossura (px reais) das barras de drawBarChart
   const bandH = barH*2 + 9;
+  const trackW = W-padL-padR;
   const maxV = Math.max(...items.map(i=>Math.max(i.avg,i.max)), 1) * 1.15;
-  const scale = (W-padL-padR)/maxV;
+  const scale = trackW/maxV;
   const svgH = items.length*bandH + padT + padB;
   svg.setAttribute('viewBox', `0 0 ${W} ${svgH}`);
   let out = '';
@@ -287,14 +319,17 @@ function drawPairedBarChart(svgId, items, colorA, colorB){
     const y = padT + idx*bandH;
     out += `<text x="${padL-8}" y="${(y+bandH/2+4).toFixed(1)}" text-anchor="end" class="bar-label">${it.label}</text>`;
     const wA = Math.max(it.avg*scale, 1);
-    out += `<rect x="${padL}" y="${y.toFixed(1)}" width="${wA.toFixed(1)}" height="${barH.toFixed(1)}" rx="2" fill="${colorA}"></rect>`;
+    out += `<rect class="bar-track" x="${padL}" y="${y.toFixed(1)}" width="${trackW}" height="${barH.toFixed(1)}" rx="${barR}"></rect>`;
+    out += `<rect class="bar" data-tip="${it.label} · medio: ${fmt(it.avg,2)} m" x="${padL}" y="${y.toFixed(1)}" width="${wA.toFixed(1)}" height="${barH.toFixed(1)}" rx="${barR}" fill="${colorA}" style="animation-delay:${idx*35}ms"></rect>`;
     out += `<text x="${(padL+wA+6).toFixed(1)}" y="${(y+barH/2+3.5).toFixed(1)}" class="bar-value">${fmt(it.avg,2)} m</text>`;
     const wB = Math.max(it.max*scale, 1);
     const y2 = y+barH+3;
-    out += `<rect x="${padL}" y="${y2.toFixed(1)}" width="${wB.toFixed(1)}" height="${barH.toFixed(1)}" rx="2" fill="${colorB}"></rect>`;
+    out += `<rect class="bar-track" x="${padL}" y="${y2.toFixed(1)}" width="${trackW}" height="${barH.toFixed(1)}" rx="${barR}"></rect>`;
+    out += `<rect class="bar" data-tip="${it.label} · maximo: ${fmt(it.max,2)} m" x="${padL}" y="${y2.toFixed(1)}" width="${wB.toFixed(1)}" height="${barH.toFixed(1)}" rx="${barR}" fill="${colorB}" style="animation-delay:${idx*35+18}ms"></rect>`;
     out += `<text x="${(padL+wB+6).toFixed(1)}" y="${(y2+barH/2+3.5).toFixed(1)}" class="bar-value">${fmt(it.max,2)} m</text>`;
   });
   svg.innerHTML = out;
+  attachBarHover(svg);
 }
 
 function drawScatterChart(svgId, points, xLabel, yLabel){
